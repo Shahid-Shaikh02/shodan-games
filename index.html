@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shodan Games - Game Portfolio</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: #0f0f0f;
+            color: #fff;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow-x: hidden;
+        }
+
+        /* Header */
+        header {
+            background: linear-gradient(135deg, #1a1a1a 0%, #0f0f0f 100%);
+            padding: 20px 0;
+            border-bottom: 2px solid #00d4ff;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 4px 20px rgba(0, 212, 255, 0.1);
+        }
+
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 28px;
+            font-weight: bold;
+            color: #00d4ff;
+            text-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
+        }
+
+        .search-bar {
+            flex: 1;
+            margin: 0 40px;
+            position: relative;
+        }
+
+        .search-bar input {
+            width: 100%;
+            padding: 10px 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid #00d4ff;
+            border-radius: 20px;
+            color: #fff;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .search-bar input::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .search-bar input:focus {
+            background: rgba(0, 212, 255, 0.1);
+            box-shadow: 0 0 20px rgba(0, 212, 255, 0.3);
+        }
+
+        /* Main Container */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        /* Section Title */
+        .section-title {
+            font-size: 24px;
+            font-weight: bold;
+            margin: 40px 0 20px 0;
+            color: #fff;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        /* Games Grid */
+        .games-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        /* Game Card */
+        .game-card {
+            position: relative;
+            border-radius: 10px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            background: #1a1a1a;
+            height: 300px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+        }
+
+        .game-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 8px 30px rgba(0, 212, 255, 0.3);
+        }
+
+        .game-card-media {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        .game-card-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: opacity 0.3s ease;
+        }
+
+        .game-card-video {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            object-fit: cover;
+        }
+
+        .game-card:hover .game-card-video {
+            opacity: 1;
+        }
+
+        .game-card:hover .game-card-image {
+            opacity: 0;
+        }
+
+        .game-card-info {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(transparent, rgba(0, 0, 0, 0.9));
+            padding: 20px;
+            transform: translateY(20px);
+            transition: transform 0.3s ease;
+        }
+
+        .game-card:hover .game-card-info {
+            transform: translateY(0);
+        }
+
+        .game-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: #fff;
+        }
+
+        .game-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            background: #00d4ff;
+            color: #000;
+            font-size: 12px;
+            font-weight: bold;
+            border-radius: 5px;
+            margin-right: 8px;
+            margin-bottom: 8px;
+        }
+
+        .game-badge.hot {
+            background: #ff6b35;
+        }
+
+        .game-badge.new {
+            background: #00d4ff;
+        }
+
+        .game-badge.updated {
+            background: #00ff00;
+        }
+
+        .game-badge.top {
+            background: #ffa500;
+        }
+
+        /* Play Button */
+        .play-btn {
+            display: inline-block;
+            margin-top: 10px;
+            padding: 8px 16px;
+            background: #00d4ff;
+            color: #000;
+            border: none;
+            border-radius: 5px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 14px;
+        }
+
+        .play-btn:hover {
+            background: #00a8cc;
+            transform: scale(1.05);
+        }
+
+        /* No Games Placeholder */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #888;
+        }
+
+        .empty-state h2 {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+
+        .empty-state p {
+            font-size: 16px;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .games-grid {
+                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+                gap: 15px;
+            }
+
+            .header-content {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .search-bar {
+                margin: 0;
+                width: 100%;
+            }
+
+            .section-title {
+                font-size: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <div class="header-content">
+            <div class="logo">🎮 Shodan Games</div>
+            <div class="search-bar">
+                <input type="text" id="searchInput" placeholder="Search games and categories" />
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <div class="container">
+        <!-- Featured Games Section -->
+        <div class="section-title">Featured Games</div>
+        <div class="games-grid" id="gameGridFeatured"></div>
+
+        <!-- HTML/CSS/JS Games Section -->
+        <div class="section-title">HTML Games</div>
+        <div class="games-grid" id="gameGridHTML"></div>
+
+        <!-- Unity Games Section -->
+        <div class="section-title">Unity Games</div>
+        <div class="games-grid" id="gameGridUnity"></div>
+    </div>
+
+    <script>
+        // Game Data Structure - ADD YOUR GAMES HERE
+        const gamesData = {
+            featured: [
+                {
+                    id: 1,
+                    title: "Sample Game 1",
+                    thumbnail: "https://via.placeholder.com/300x300?text=Game+1",
+                    video: "https://via.placeholder.com/300x300?text=Video+1",
+                    badge: "hot",
+                    type: "html", // 'html' or 'external'
+                    link: "./games/game1/index.html" // Local path or external URL
+                }
+            ],
+            html: [
+                // Add your HTML/CSS/JS games here
+                // {
+                //     id: 2,
+                //     title: "Your Game Name",
+                //     thumbnail: "path/to/thumbnail.jpg",
+                //     video: "path/to/preview.mp4",
+                //     badge: "new",
+                //     type: "html",
+                //     link: "./games/your-game/index.html"
+                // }
+            ],
+            unity: [
+                // Add your Unity games here (external links)
+                // {
+                //     id: 3,
+                //     title: "Your Unity Game",
+                //     thumbnail: "https://example.com/thumbnail.jpg",
+                //     video: "https://example.com/preview.mp4",
+                //     badge: "updated",
+                //     type: "external",
+                //     link: "https://itch.io/your-game" // or GameJolt link
+                // }
+            ]
+        };
+
+        // Initialize the game grid
+        function initializeGames() {
+            const hasFeatured = gamesData.featured.length > 0;
+            const hasHTML = gamesData.html.length > 0;
+            const hasUnity = gamesData.unity.length > 0;
+
+            if (hasFeatured) {
+                renderGames(gamesData.featured, 'gameGridFeatured');
+            } else {
+                document.getElementById('gameGridFeatured').parentElement.style.display = 'none';
+            }
+
+            if (hasHTML) {
+                renderGames(gamesData.html, 'gameGridHTML');
+            } else {
+                document.getElementById('gameGridHTML').parentElement.style.display = 'none';
+            }
+
+            if (hasUnity) {
+                renderGames(gamesData.unity, 'gameGridUnity');
+            } else {
+                document.getElementById('gameGridUnity').parentElement.style.display = 'none';
+            }
+
+            // Show empty state if no games
+            if (!hasFeatured && !hasHTML && !hasUnity) {
+                document.querySelector('.container').innerHTML = `
+                    <div class="empty-state">
+                        <h2>Coming Soon!</h2>
+                        <p>Games will be added here soon. Check back later!</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Render games to the grid
+        function renderGames(games, gridId) {
+            const grid = document.getElementById(gridId);
+            grid.innerHTML = '';
+
+            games.forEach(game => {
+                const gameCard = document.createElement('div');
+                gameCard.className = 'game-card';
+                gameCard.innerHTML = `
+                    <div class="game-card-media">
+                        <img src="${game.thumbnail}" alt="${game.title}" class="game-card-image" />
+                        <video class="game-card-video" autoplay muted loop>
+                            <source src="${game.video}" type="video/mp4" />
+                        </video>
+                        <div class="game-card-info">
+                            <div class="game-title">${game.title}</div>
+                            <div>
+                                ${game.badge ? `<span class="game-badge ${game.badge}">${game.badge.toUpperCase()}</span>` : ''}
+                            </div>
+                            <button class="play-btn" onclick="playGame('${game.link}', '${game.type}')">Play</button>
+                        </div>
+                    </div>
+                `;
+                grid.appendChild(gameCard);
+            });
+        }
+
+        // Handle game play
+        function playGame(link, type) {
+            if (type === 'html') {
+                // Open local HTML game
+                window.location.href = link;
+            } else if (type === 'external') {
+                // Open external game in new tab
+                window.open(link, '_blank');
+            }
+        }
+
+        // Search functionality
+        document.getElementById('searchInput').addEventListener('input', function(e) {
+            const searchTerm = e.target.value.toLowerCase();
+            const allCards = document.querySelectorAll('.game-card');
+            
+            allCards.forEach(card => {
+                const title = card.querySelector('.game-title').textContent.toLowerCase();
+                if (title.includes(searchTerm)) {
+                    card.style.display = '';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        });
+
+        // Initialize on page load
+        window.addEventListener('load', initializeGames);
+    </script>
+</body>
+</html>
