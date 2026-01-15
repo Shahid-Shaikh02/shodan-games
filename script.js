@@ -1,129 +1,223 @@
-// Game Data Structure - ADD YOUR GAMES HERE
-        const gamesData = {
-            featured: [
-                {
-                    id: 1,
-                    title: "Sample Game 1",
-                    thumbnail: "https://via.placeholder.com/300x300?text=Game+1",
-                    video: "https://via.placeholder.com/300x300?text=Video+1",
-                    badge: "hot",
-                    type: "html", // 'html' or 'external'
-                    link: "./games/game1/index.html" // Local path or external URL
-                }
-            ],
-            html: [
-                // Add your HTML/CSS/JS games here
-                // {
-                //     id: 2,
-                //     title: "Your Game Name",
-                //     thumbnail: "path/to/thumbnail.jpg",
-                //     video: "path/to/preview.mp4",
-                //     badge: "new",
-                //     type: "html",
-                //     link: "./games/your-game/index.html"
-                // }
-            ],
-            unity: [
-                // Add your Unity games here (external links)
-                // {
-                //     id: 3,
-                //     title: "Your Unity Game",
-                //     thumbnail: "https://example.com/thumbnail.jpg",
-                //     video: "https://example.com/preview.mp4",
-                //     badge: "updated",
-                //     type: "external",
-                //     link: "https://itch.io/your-game" // or GameJolt link
-                // }
-            ]
-        };
+// Game Data Structure
+let gamesData = {
+  featured: [],
+  html: [],
+  unity: []
+};
 
-        // Initialize the game grid
-        function initializeGames() {
-            const hasFeatured = gamesData.featured.length > 0;
-            const hasHTML = gamesData.html.length > 0;
-            const hasUnity = gamesData.unity.length > 0;
+// DOM REFERENCES
+const container = document.getElementById('gamesContainer');
 
-            if (hasFeatured) {
-                renderGames(gamesData.featured, 'gameGridFeatured');
-            } else {
-                document.getElementById('gameGridFeatured').parentElement.style.display = 'none';
-            }
+// SAFETY CHECK
+if (!container) {
+  console.error('gamesContainer not found in HTML');
+  throw new Error('Missing container');
+}
 
-            if (hasHTML) {
-                renderGames(gamesData.html, 'gameGridHTML');
-            } else {
-                document.getElementById('gameGridHTML').parentElement.style.display = 'none';
-            }
+// ============================================
+// LOAD ALL GAMES FROM CATEGORY STRUCTURE
+// ============================================
+async function loadAllGames() {
+  try {
+    console.log('Loading games list...');
+    
+    // Fetch games-list.json
+    const listResponse = await fetch('./games-list.json');
+    if (!listResponse.ok) {
+      throw new Error(`Failed to load games-list.json: ${listResponse.status}`);
+    }
+    
+    const gamesList = await listResponse.json();
+    console.log('Games list loaded:', gamesList);
 
-            if (hasUnity) {
-                renderGames(gamesData.unity, 'gameGridUnity');
-            } else {
-                document.getElementById('gameGridUnity').parentElement.style.display = 'none';
-            }
-
-            // Show empty state if no games
-            if (!hasFeatured && !hasHTML && !hasUnity) {
-                document.querySelector('.container').innerHTML = `
-                    <div class="empty-state">
-                        <h2>Coming Soon!</h2>
-                        <p>Games will be added here soon. Check back later!</p>
-                    </div>
-                `;
-            }
+    // Loop through categories
+    for (const category in gamesList.categories) {
+      const gameFolders = gamesList.categories[category];
+      
+      for (const gameFolderName of gameFolders) {
+        try {
+          // Full path: games/web-game/ball-escapes-a-circular-trap/data.json
+          const folder = `${category}/${gameFolderName}`;
+          const dataPath = `./games/${folder}/data.json`;
+          
+          console.log(`Loading: ${dataPath}`);
+          
+          const response = await fetch(dataPath);
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+          }
+          
+          const gameData = await response.json();
+          
+          // ========== FIX PATHS ==========
+          // Remove leading ./ from paths, then add full prefix
+          const removeLeadingDot = (path) => path.replace(/^\.\//, '');
+          
+          gameData.thumbnail = `./games/${folder}/${removeLeadingDot(gameData.thumbnail)}`;
+          gameData.video = `./games/${folder}/${removeLeadingDot(gameData.video)}`;
+          gameData.link = `./games/${folder}/${removeLeadingDot(gameData.link)}`;
+          
+          console.log(`✅ Loaded: ${gameData.title}`, gameData);
+          
+          // Add to appropriate section
+          if (gameData.badge === 'hot' || gameData.featured === true) {
+            gamesData.featured.push(gameData);
+          } else if (gameData.type === 'html') {
+            gamesData.html.push(gameData);
+          } else if (gameData.type === 'external') {
+            gamesData.unity.push(gameData);
+          }
+          
+        } catch (error) {
+          console.warn(`❌ Could not load game: ${gameFolderName}`, error.message);
         }
+      }
+    }
 
-        // Render games to the grid
-        function renderGames(games, gridId) {
-            const grid = document.getElementById(gridId);
-            grid.innerHTML = '';
+    console.log('Final gamesData:', gamesData);
+    initializeGames();
+    
+  } catch (error) {
+    console.error('❌ Error loading games:', error);
+  }
+}
 
-            games.forEach(game => {
-                const gameCard = document.createElement('div');
-                gameCard.className = 'game-card';
-                gameCard.innerHTML = `
-                    <div class="game-card-media">
-                        <img src="${game.thumbnail}" alt="${game.title}" class="game-card-image" />
-                        <video class="game-card-video" autoplay muted loop>
-                            <source src="${game.video}" type="video/mp4" />
-                        </video>
-                        <div class="game-card-info">
-                            <div class="game-title">${game.title}</div>
-                            <div>
-                                ${game.badge ? `<span class="game-badge ${game.badge}">${game.badge.toUpperCase()}</span>` : ''}
-                            </div>
-                            <button class="play-btn" onclick="playGame('${game.link}', '${game.type}')">Play</button>
-                        </div>
-                    </div>
-                `;
-                grid.appendChild(gameCard);
-            });
-        }
+// ============================================
+// INITIALIZE GAME GRID
+// ============================================
+function initializeGames() {
+  const hasFeatured = gamesData.featured && gamesData.featured.length > 0;
+  const hasHTML = gamesData.html && gamesData.html.length > 0;
+  const hasUnity = gamesData.unity && gamesData.unity.length > 0;
 
-        // Handle game play
-        function playGame(link, type) {
-            if (type === 'html') {
-                // Open local HTML game
-                window.location.href = link;
-            } else if (type === 'external') {
-                // Open external game in new tab
-                window.open(link, '_blank');
-            }
-        }
+  console.log(`Featured: ${hasFeatured}, HTML: ${hasHTML}, Unity: ${hasUnity}`);
 
-        // Search functionality
-        document.getElementById('searchInput').addEventListener('input', function(e) {
-            const searchTerm = e.target.value.toLowerCase();
-            const allCards = document.querySelectorAll('.game-card');
-            
-            allCards.forEach(card => {
-                const title = card.querySelector('.game-title').textContent.toLowerCase();
-                if (title.includes(searchTerm)) {
-                    card.style.display = '';
-                } else {
-                    card.style.display = 'none';
-                }
-            });
-        });
+  // Render Featured Games
+  if (hasFeatured) {
+    renderGames(gamesData.featured, 'gameGridFeatured');
+  } else {
+    const featuredSection = document.getElementById('gameGridFeatured');
+    if (featuredSection) {
+      featuredSection.parentElement.style.display = 'none';
+    }
+  }
 
-        // Initialize on page load
-        window.addEventListener('load', initializeGames);
+  // Render HTML Games
+  if (hasHTML) {
+    renderGames(gamesData.html, 'gameGridHTML');
+  } else {
+    const htmlSection = document.getElementById('gameGridHTML');
+    if (htmlSection) {
+      htmlSection.parentElement.style.display = 'none';
+    }
+  }
+
+  // Render Unity Games
+  if (hasUnity) {
+    renderGames(gamesData.unity, 'gameGridUnity');
+  } else {
+    const unitySection = document.getElementById('gameGridUnity');
+    if (unitySection) {
+      unitySection.parentElement.style.display = 'none';
+    }
+  }
+
+  // Show empty state if no games
+  if (!hasFeatured && !hasHTML && !hasUnity) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <h2>🎮 Coming Soon!</h2>
+        <p>Games will be added here soon. Check back later!</p>
+      </div>
+    `;
+  }
+}
+
+// ============================================
+// RENDER GAMES TO GRID
+// ============================================
+function renderGames(games, gridId) {
+  const grid = document.getElementById(gridId);
+  if (!grid) {
+    console.error(`Grid not found: ${gridId}`);
+    return;
+  }
+  
+  grid.innerHTML = '';
+
+  games.forEach(game => {
+    const gameCard = document.createElement('div');
+    gameCard.className = 'game-card';
+
+    gameCard.innerHTML = `
+      <div class="game-card-media">
+        <img src="${game.thumbnail}" alt="${game.title}" class="game-card-image" loading="lazy" />
+        <video class="game-card-video" muted loop preload="metadata">
+          <source src="${game.video}" type="video/mp4" />
+        </video>
+        <div class="game-card-info">
+          <div class="game-title">${game.title}</div>
+          <div>
+            ${game.badge ? `<span class="game-badge ${game.badge}">${game.badge.toUpperCase()}</span>` : ''}
+          </div>
+          <button class="play-btn" onclick="playGame('${game.link}', '${game.type}')">Play</button>
+        </div>
+      </div>
+    `;
+
+    // Video preview on hover
+    const video = gameCard.querySelector('.game-card-video');
+    gameCard.addEventListener('mouseenter', () => {
+      if (game.video) {
+        video.play().catch(err => console.warn('Video autoplay blocked:', err));
+      }
+    });
+
+    gameCard.addEventListener('mouseleave', () => {
+      video.pause();
+      video.currentTime = 0;
+    });
+
+    grid.appendChild(gameCard);
+  });
+}
+
+// ============================================
+// HANDLE GAME PLAY
+// ============================================
+function playGame(link, type) {
+  try {
+    if (type === 'html') {
+      // Open local HTML game
+      window.location.href = link;
+    } else if (type === 'external') {
+      // Open external game in new tab
+      window.open(link, '_blank');
+    } else {
+      console.warn('Unknown game type:', type);
+    }
+  } catch (error) {
+    console.error('Error playing game:', error);
+  }
+}
+
+// ============================================
+// SEARCH FUNCTIONALITY
+// ============================================
+const searchInput = document.getElementById('searchInput');
+if (searchInput) {
+  searchInput.addEventListener('input', function(e) {
+    const searchTerm = e.target.value.toLowerCase();
+    const allCards = document.querySelectorAll('.game-card');
+
+    allCards.forEach(card => {
+      const title = card.querySelector('.game-title').textContent.toLowerCase();
+      card.style.display = title.includes(searchTerm) ? '' : 'none';
+    });
+  });
+}
+
+// ============================================
+// INITIALIZE ON PAGE LOAD
+// ============================================
+window.addEventListener('load', loadAllGames);
