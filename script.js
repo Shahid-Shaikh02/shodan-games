@@ -28,12 +28,11 @@ async function loadAllGames() {
     console.log('Loading games list...');
     
     // Fetch games-list.json
-    const listResponse = await fetch(`${basePath}games-list.json`);
-    if (!listResponse.ok) {
-      throw new Error(`Failed to load games-list.json: ${listResponse.status}`);
-    }
-    
-    const gamesList = await listResponse.json();
+    const gamesList = await listResponse.json().catch(err => {
+      console.error('Invalid JSON in games-list.json:', err);
+      throw new Error('games-list.json is corrupted');
+    });
+
     console.log('Games list loaded:', gamesList);
 
     // Loop through categories
@@ -64,14 +63,18 @@ async function loadAllGames() {
           
           console.log(`✅ Loaded: ${gameData.title}`, gameData);
           
-          // Add to appropriate section
-          if (gameData.badge === 'hot' || gameData.featured === true) {
-            gamesData.featured.push(gameData);
-          } else if (gameData.type === 'html') {
+          // Always add to category first
+          if (gameData.type === 'html') {
             gamesData.html.push(gameData);
           } else if (gameData.type === 'external') {
             gamesData.unity.push(gameData);
           }
+
+          // Then also add to featured if marked
+          if (gameData.badge === 'hot' || gameData.featured === true) {
+            gamesData.featured.push(gameData);
+          }
+
           
         } catch (error) {
           console.warn(`❌ Could not load game: ${gameFolderName}`, error.message);
@@ -101,9 +104,14 @@ function initializeGames() {
   if (hasFeatured) {
     renderGames(gamesData.featured, 'gameGridFeatured');
   } else {
-    const featuredSection = document.getElementById('gameGridFeatured');
-    if (featuredSection) {
-      featuredSection.parentElement.style.display = 'none';
+    // Hide both the title and the grid
+    const featuredGrid = document.getElementById('gameGridFeatured');
+    const featuredTitle = featuredGrid?.previousElementSibling;
+    if (featuredGrid) {
+      featuredGrid.style.display = 'none';
+      if (featuredTitle?.classList.contains('section-title')) {
+        featuredTitle.style.display = 'none';
+      }
     }
   }
 

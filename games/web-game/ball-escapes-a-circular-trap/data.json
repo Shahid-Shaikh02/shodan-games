@@ -4,6 +4,7 @@
   "thumbnail": "./resources/thumb.png",
   "video": "./resources/preview.mp4",
   "badge": "new",
+  "featured": true, 
   "type": "html",
   "link": "./index.html"
 }
