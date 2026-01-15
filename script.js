@@ -14,6 +14,12 @@ if (!container) {
   throw new Error('Missing container');
 }
 
+// Detect GitHub Pages subdirectory
+const isGitHubPages = window.location.hostname.includes('github.io');
+const basePath = isGitHubPages ? '/shodan-games/' : './';
+
+console.log(`Using base path: ${basePath}`);
+
 // ============================================
 // LOAD ALL GAMES FROM CATEGORY STRUCTURE
 // ============================================
@@ -22,7 +28,7 @@ async function loadAllGames() {
     console.log('Loading games list...');
     
     // Fetch games-list.json
-    const listResponse = await fetch('./games-list.json');
+    const listResponse = await fetch(`${basePath}games-list.json`);
     if (!listResponse.ok) {
       throw new Error(`Failed to load games-list.json: ${listResponse.status}`);
     }
@@ -38,7 +44,7 @@ async function loadAllGames() {
         try {
           // Full path: games/web-game/ball-escapes-a-circular-trap/data.json
           const folder = `${category}/${gameFolderName}`;
-          const dataPath = `./games/${folder}/data.json`;
+          const dataPath = `${basePath}games/${folder}/data.json`;
           
           console.log(`Loading: ${dataPath}`);
           
@@ -47,15 +53,14 @@ async function loadAllGames() {
             throw new Error(`HTTP ${response.status}`);
           }
           
-          const gameData = await response.json(); //OVERWRITES above!
+          const gameData = await response.json();
           
           // ========== FIX PATHS ==========
-          // Remove leading ./ from paths, then add full prefix
           const removeLeadingDot = (path) => path.replace(/^\.\//, '');
           
-          gameData.thumbnail = `./games/${folder}/${removeLeadingDot(gameData.thumbnail)}`;
-          gameData.video = `./games/${folder}/${removeLeadingDot(gameData.video)}`;
-          gameData.link = `./games/${folder}/${removeLeadingDot(gameData.link)}`;
+          gameData.thumbnail = `${basePath}games/${folder}/${removeLeadingDot(gameData.thumbnail)}`;
+          gameData.video = `${basePath}games/${folder}/${removeLeadingDot(gameData.video)}`;
+          gameData.link = `${basePath}games/${folder}/${removeLeadingDot(gameData.link)}`;
           
           console.log(`✅ Loaded: ${gameData.title}`, gameData);
           
@@ -188,8 +193,9 @@ function renderGames(games, gridId) {
 function playGame(link, type) {
   try {
     if (type === 'html') {
-      // Open local HTML game
-      window.location.href = link;
+      // Open local HTML game with correct base path
+      const gameLink = link.startsWith('/') ? link : `${basePath}${link}`;
+      window.location.href = gameLink;
     } else if (type === 'external') {
       // Open external game in new tab
       window.open(link, '_blank');
