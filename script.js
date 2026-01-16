@@ -59,8 +59,7 @@ async function loadAllGames() {
           const gameData = await response.json();
           
           // ========== FIX PATHS ==========
-          const removeLeadingDot = (path) => path.replace(/^\.\\/, '');
-          
+const removeLeadingDot = (path) => path.startsWith('./') ? path.slice(2) : path;          
           gameData.thumbnail = `${basePath}games/${folder}/${removeLeadingDot(gameData.thumbnail)}`;
           gameData.video = `${basePath}games/${folder}/${removeLeadingDot(gameData.video)}`;
           gameData.link = `${basePath}games/${folder}/${removeLeadingDot(gameData.link)}`;
