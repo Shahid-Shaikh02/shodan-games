@@ -28,6 +28,11 @@ async function loadAllGames() {
     console.log('Loading games list...');
     
     // Fetch games-list.json
+    const listResponse = await fetch(`${basePath}games-list.json`);
+    if (!listResponse.ok) {
+      throw new Error(`Failed to load games-list.json: ${listResponse.status}`);
+    }
+    
     const gamesList = await listResponse.json().catch(err => {
       console.error('Invalid JSON in games-list.json:', err);
       throw new Error('games-list.json is corrupted');
