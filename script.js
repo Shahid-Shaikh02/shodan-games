@@ -61,6 +61,7 @@ async function loadAllGames() {
           // ========== FIX PATHS ==========
 const removeLeadingDot = (path) => path.startsWith('./') ? path.slice(2) : path;          
           gameData.thumbnail = `${basePath}games/${folder}/${removeLeadingDot(gameData.thumbnail)}`;
+          console.log('DEBUG thumb:', gameData.thumbnail);
           gameData.video = `${basePath}games/${folder}/${removeLeadingDot(gameData.video)}`;
           gameData.link = `${basePath}games/${folder}/${removeLeadingDot(gameData.link)}`;
           
