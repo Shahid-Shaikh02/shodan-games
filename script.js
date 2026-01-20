@@ -238,7 +238,7 @@ gameCard.addEventListener('mouseleave', () => {
     video.style.display = '';          // optional: hide again
   }
 });
-}
+},
 
 // ============================================
 // HANDLE GAME PLAY
@@ -258,7 +258,7 @@ function playGame(link, type) {
   } catch (error) {
     console.error('Error playing game:', error);
   }
-}
+},
 
 // ============================================
 // SEARCH FUNCTIONALITY
@@ -279,3 +279,4 @@ if (searchInput) {
 // INITIALIZE ON PAGE LOAD
 // ============================================
 window.addEventListener('load', loadAllGames);
+}
