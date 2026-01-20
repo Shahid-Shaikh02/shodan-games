@@ -164,38 +164,80 @@ function renderGames(games, gridId) {
     gameCard.className = 'game-card';
     gameCard.style.cursor = 'pointer';
     
-    gameCard.innerHTML = `
-      <div class="game-card-media">
-        <img src="${game.thumbnail}" alt="${game.title}" class="game-card-image" loading="lazy" />
-        <video class="game-card-video" muted loop preload="metadata">
-          <source src="${game.video}" type="video/mp4" />
-        </video>
-        <div class="game-card-info">
-          <div class="game-title">${game.title}</div>
-          <div>
-            ${game.badge ? `<span class="game-badge ${game.badge}">${game.badge.toUpperCase()}</span>` : ''}
-          </div>
-        </div>
-      </div>
-    `;
+    // gameCard.innerHTML = `
+    //   <div class="game-card-media">
+    //     <img src="${game.thumbnail}" alt="${game.title}" class="game-card-image" loading="lazy" />
+    //     <video class="game-card-video" muted loop preload="metadata">
+    //       <source src="${game.video}" type="video/mp4" />
+    //     </video>
+    //     <div class="game-card-info">
+    //       <div class="game-title">${game.title}</div>
+    //       <div>
+    //         ${game.badge ? `<span class="game-badge ${game.badge}">${game.badge.toUpperCase()}</span>` : ''}
+    //       </div>
+    //     </div>
+    //   </div>
+    // `;
     
+    gameCard.innerHTML = `
+  <div class="game-card-media">
+    <img
+      class="game-card-thumbnail"
+      src="${game.thumbnail}"
+      alt="${game.title} thumbnail"
+      loading="lazy"
+    />
+    ${game.video ? `
+      <video
+        class="game-card-video"
+        src="${game.video}"
+        muted
+        loop
+        preload="none"
+      ></video>
+    ` : ''}
+  </div>
+
+  <div class="game-card-info">
+    <div class="game-title">${game.title}</div>
+    ${game.badge ? `<span class="badge">${game.badge.toUpperCase()}</span>` : ''}
+  </div>
+    `;
+
     // Make entire card clickable
     gameCard.addEventListener('click', () => playGame(game.link, game.type));
     
     // Video preview on hover
-    const video = gameCard.querySelector('.game-card-video');
-    gameCard.addEventListener('mouseenter', () => {
-      if (game.video) {
-        video.play().catch(err => console.warn('Video autoplay blocked:', err));
-      }
-    });
-    gameCard.addEventListener('mouseleave', () => {
-      video.pause();
-      video.currentTime = 0;
-    });
+  //   const video = gameCard.querySelector('.game-card-video');
+  //   gameCard.addEventListener('mouseenter', () => {
+  //     if (game.video) {
+  //       video.play().catch(err => console.warn('Video autoplay blocked:', err));
+  //     }
+  //   });
+  //   gameCard.addEventListener('mouseleave', () => {
+  //     video.pause();
+  //     video.currentTime = 0;
+  //   });
     
-    grid.appendChild(gameCard);
-  });
+  //   grid.appendChild(gameCard);
+  // });
+
+  const video = gameCard.querySelector('.game-card-video');
+
+gameCard.addEventListener('mouseenter', () => {
+  if (video && game.video) {
+    video.style.display = 'block';      // optional: show video over thumb
+    video.play().catch(err => console.warn('Video autoplay blocked:', err));
+  }
+});
+
+gameCard.addEventListener('mouseleave', () => {
+  if (video) {
+    video.pause();
+    video.currentTime = 0;
+    video.style.display = '';          // optional: hide again
+  }
+});
 }
 
 // ============================================
