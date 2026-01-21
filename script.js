@@ -178,7 +178,7 @@ function renderGames(games, gridId) {
         </div>
       </div>
     `;
-
+    
     // Make entire card clickable
     gameCard.addEventListener('click', () => playGame(game.link, game.type));
     
