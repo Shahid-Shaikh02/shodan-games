@@ -1,0 +1,11 @@
+{
+  "category": "html", 
+  "isFeatured": true,
+  "title": "Ball Escape",
+  "description": "Escape the circular path in this pure HTML5 game.",
+  "thumbnail": "resources/thumb.jpg",
+  "video": "resources/preview.mp4",
+  "playUrl": "index.html",
+  "sourceUrl": "https://github.com/Shahid-Shaikh02/html-game-1",
+  "tags": ["HTML5", "Canvas", "Casual"]
+}

@@ -1,112 +1,149 @@
+
 // ==========================================
 // SHODAN GAMES - PORTFOLIO JAVASCRIPT
 // ==========================================
 
-// Configuration
 const CONFIG = {
     gamesJsonPath: './games-list.json',
-    defaultThumbnail: null, // Set to a default image path if needed
+    defaultThumbnail: null,
     enableVideoPreview: true,
-    enableAnalytics: false // Set to true if you add Google Analytics
+    enableAnalytics: false
 };
 
-// Game data storage
+// Data storage
 let gamesData = {
     featured: [],
     unity: [],
     html: []
 };
 
-// Initialize the portfolio
 document.addEventListener('DOMContentLoaded', () => {
     loadGames();
     setupEventListeners();
 });
 
-// Load games from JSON file
+// 1. ADVANCED LOADING SYSTEM
 async function loadGames() {
     const loadingEl = document.getElementById('loading');
     const emptyStateEl = document.getElementById('empty-state');
 
     try {
+        // Fetch the category list
         const response = await fetch(CONFIG.gamesJsonPath);
+        if (!response.ok) throw new Error(`Failed to load list: ${response.status}`);
         
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+        const data = await response.json();
+        const categories = data.categories || {};
+
+        // Create a list of all file fetches we need to do
+        let fetchPromises = [];
+
+        // Loop through JSON categories (html, unity)
+        for (const [category, gameFolders] of Object.entries(categories)) {
+            
+            // Loop through each game folder in that category
+            gameFolders.forEach(folderName => {
+                // Construct path: games/html/snake/data.json
+                const jsonPath = `games/${category}/${folderName}/data.json`;
+                
+                // Add to fetch list
+                fetchPromises.push(
+                    fetchGameData(jsonPath, category, folderName)
+                );
+            });
         }
-        
-        gamesData = await response.json();
-        
-        // Hide loading
+
+        // Run all fetches in parallel
+        await Promise.all(fetchPromises);
+
+        // Hide loading screen
         loadingEl.style.display = 'none';
-        
-        // Check if we have any games
-        const totalGames = (gamesData.featured?.length || 0) + 
-                          (gamesData.unity?.length || 0) + 
-                          (gamesData.html?.length || 0);
-        
+
+        // Check if we found any games
+        const totalGames = gamesData.featured.length + gamesData.unity.length + gamesData.html.length;
         if (totalGames === 0) {
             emptyStateEl.style.display = 'block';
         } else {
             renderGames();
         }
-        
+
     } catch (error) {
         console.error('Error loading games:', error);
         loadingEl.innerHTML = `
             <div style="color: #ff6b6b;">
                 <p>⚠️ Error loading games</p>
-                <p style="font-size: 0.9em;">Please check that games-list.json exists and is valid</p>
+                <p style="font-size: 0.9em;">Check console for details.</p>
             </div>
         `;
     }
 }
 
-// Render all game categories
+// Helper: Fetch a single game's data.json
+async function fetchGameData(path, category, folderName) {
+    try {
+        const res = await fetch(path);
+        if (!res.ok) return;
+
+        const game = await res.json();
+
+        // AUTO-FIX PATHS:
+        // This converts "thumb.png" -> "games/html/snake/thumb.png"
+        const rootPath = `games/${category}/${folderName}/`;
+        
+        const fix = (p) => (p && !p.startsWith('http') && !p.startsWith('./')) ? rootPath + p : p;
+
+        game.thumbnail = fix(game.thumbnail);
+        game.video = fix(game.video);
+        game.playUrl = fix(game.playUrl);
+
+        // Store in correct array
+        if (gamesData[category]) {
+            gamesData[category].push(game);
+        }
+
+        // Add to featured if marked
+        if (game.isFeatured) {
+            gamesData.featured.push(game);
+        }
+
+    } catch (err) {
+        console.warn(`Could not load game at ${path}`, err);
+    }
+}
+
+// 2. RENDERING SYSTEM
 function renderGames() {
-    // Render Featured Games
-    if (gamesData.featured && gamesData.featured.length > 0) {
+    // Render Featured
+    if (gamesData.featured.length > 0) {
         renderGameSection('featured', gamesData.featured);
     }
-    
-    // Render Unity Games
-    if (gamesData.unity && gamesData.unity.length > 0) {
+    // Render Unity
+    if (gamesData.unity.length > 0) {
         renderGameSection('unity', gamesData.unity);
     }
-    
-    // Render HTML5 Games
-    if (gamesData.html && gamesData.html.length > 0) {
+    // Render HTML
+    if (gamesData.html.length > 0) {
         renderGameSection('html', gamesData.html);
     }
 }
 
-// Render a specific game section
 function renderGameSection(category, games) {
     const sectionEl = document.getElementById(`${category}-section`);
     const gamesGridEl = document.getElementById(`${category}-games`);
     
-    if (!sectionEl || !gamesGridEl) {
-        console.warn(`Section elements not found for category: ${category}`);
-        return;
-    }
-    
-    // Show section
-    sectionEl.style.display = 'block';
-    
-    // Create game cards
-    gamesGridEl.innerHTML = games.map(game => createGameCard(game)).join('');
-    
-    // Setup video preview handlers if enabled
-    if (CONFIG.enableVideoPreview) {
-        setupVideoHandlers(gamesGridEl);
+    if (sectionEl && gamesGridEl) {
+        sectionEl.style.display = 'block';
+        gamesGridEl.innerHTML = games.map(game => createGameCard(game)).join('');
+        
+        if (CONFIG.enableVideoPreview) {
+            setupVideoHandlers(gamesGridEl);
+        }
     }
 }
 
-// Create a game card HTML
 function createGameCard(game) {
-    const thumbnail = game.thumbnail || CONFIG.defaultThumbnail || '';
+    const thumbnail = game.thumbnail || '';
     const hasVideo = game.video && CONFIG.enableVideoPreview;
-    const tags = game.tags || [];
     
     return `
         <div class="game-card" data-game-title="${escapeHtml(game.title)}">
@@ -118,8 +155,7 @@ function createGameCard(game) {
                 ${hasVideo ? 
                     `<video muted loop preload="none">
                         <source src="${escapeHtml(game.video)}" type="video/mp4">
-                    </video>` : 
-                    ''
+                    </video>` : ''
                 }
                 <div class="play-overlay"></div>
             </div>
@@ -127,17 +163,14 @@ function createGameCard(game) {
                 <h3 class="game-title">${escapeHtml(game.title)}</h3>
                 <p class="game-description">${escapeHtml(game.description)}</p>
                 <div class="game-tags">
-                    ${tags.map(tag => `<span class="tag">${escapeHtml(tag)}</span>`).join('')}
+                    ${(game.tags || []).map(tag => `<span class="tag">${escapeHtml(tag)}</span>`).join('')}
                 </div>
                 <div class="game-actions">
                     <button class="btn btn-play" onclick="playGame('${escapeHtml(game.playUrl)}', '${escapeHtml(game.title)}')">
                         ▶ Play Now
                     </button>
                     ${game.sourceUrl ? 
-                        `<a href="${escapeHtml(game.sourceUrl)}" target="_blank" rel="noopener" class="btn btn-source">
-                            📁 Source
-                        </a>` : 
-                        ''
+                        `<a href="${escapeHtml(game.sourceUrl)}" target="_blank" class="btn btn-source">📁 Source</a>` : ''
                     }
                 </div>
             </div>
@@ -145,20 +178,14 @@ function createGameCard(game) {
     `;
 }
 
-// Setup video preview handlers
+// 3. INTERACTION HANDLERS
 function setupVideoHandlers(containerEl) {
     const gameCards = containerEl.querySelectorAll('.game-card');
-    
     gameCards.forEach(card => {
         const video = card.querySelector('video');
         if (!video) return;
         
-        card.addEventListener('mouseenter', () => {
-            video.play().catch(err => {
-                console.log('Video play failed:', err);
-            });
-        });
-        
+        card.addEventListener('mouseenter', () => video.play().catch(() => {}));
         card.addEventListener('mouseleave', () => {
             video.pause();
             video.currentTime = 0;
@@ -166,95 +193,32 @@ function setupVideoHandlers(containerEl) {
     });
 }
 
-// Play game in modal
-// Play game in a new tab
 function playGame(url, title) {
-    // Option 1: Open in a NEW tab (Recommended)
-    // window.open(url, '_blank');
-
-    // Option 2: Open in the SAME tab (Delete the line above and uncomment this one if you prefer)
-    window.location.href = url;
+    // Open in new tab
+    window.open(url, '_blank');
     
-    // Keep Analytics (Optional)
     if (CONFIG.enableAnalytics && typeof gtag !== 'undefined') {
-        gtag('event', 'play_game', {
-            'game_title': title,
-            'game_url': url
-        });
+        gtag('event', 'play_game', { 'game_title': title, 'game_url': url });
     }
 }
 
-
-// old model for play game!!
-// function playGame(url, title) {
-//     const modal = document.getElementById('game-modal');
-//     const iframe = document.getElementById('game-frame');
-    
-//     iframe.src = url;
-//     modal.classList.add('active');
-//     document.body.style.overflow = 'hidden';
-    
-//     // Track game plays (if analytics enabled)
-//     if (CONFIG.enableAnalytics && typeof gtag !== 'undefined') {
-//         gtag('event', 'play_game', {
-//             'game_title': title,
-//             'game_url': url
-//         });
-//     }
-// }
-
-// Close game modal
-function closeGame() {
-    const modal = document.getElementById('game-modal');
-    const iframe = document.getElementById('game-frame');
-    
-    modal.classList.remove('active');
-    iframe.src = '';
-    document.body.style.overflow = 'auto';
-}
-
-// Setup event listeners
-function setupEventListeners() {
-    // Close modal on ESC key
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') {
-            closeGame();
-        }
-    });
-    
-    // Close modal on background click
-    const modal = document.getElementById('game-modal');
-    modal.addEventListener('click', (e) => {
-        if (e.target === modal) {
-            closeGame();
-        }
-    });
-}
-
-// Utility: Escape HTML to prevent XSS
 function escapeHtml(text) {
     if (!text) return '';
-    const map = {
-        '&': '&amp;',
-        '<': '&lt;',
-        '>': '&gt;',
-        '"': '&quot;',
-        "'": '&#039;'
-    };
-    return text.replace(/[&<>"']/g, m => map[m]);
+    return text.replace(/[&<>"']/g, m => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;'
+    })[m]);
 }
 
-// Error handling for images
-document.addEventListener('error', (e) => {
-    if (e.target.tagName === 'IMG') {
-        e.target.style.display = 'none';
-        const thumbnail = e.target.closest('.game-thumbnail');
-        if (thumbnail && !thumbnail.querySelector('.no-thumbnail')) {
-            thumbnail.innerHTML = '<div class="no-thumbnail">🎮</div>' + thumbnail.innerHTML;
-        }
-    }
-}, true);
+// Keep modal code just in case needed later, though unused for new tab behavior
+function closeGame() {
+    const modal = document.getElementById('game-modal');
+    if(modal) modal.classList.remove('active');
+}
 
-// Make functions globally accessible
+function setupEventListeners() {
+    // Optional: Add global listeners here if needed
+}
+
+// Make globally accessible
 window.playGame = playGame;
 window.closeGame = closeGame;

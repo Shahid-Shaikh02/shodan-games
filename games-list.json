@@ -1,73 +1,12 @@
 {
-  "featured": [
-    {
-      "title": "Ball Escape Game",
-      "description": "Ball Escape a Circular Path | Pure HTML5/JavaScript game.",
-      "thumbnail": "./games/web-game/ball-escapes-a-circular-trap/resources/thumb.jpg",
-      "video": "./games/web-game/ball-escapes-a-circular-trap/resources/preview.mp4",
-      "playUrl": "./games/web-game/ball-escapes-a-circular-trap/index.html",
-      "sourceUrl": "https://github.com/Shahid-Shaikh02/shodan-games/tree/main/games/web-game/ball-escapes-a-circular-trap",
-      "tags": ["HTML5", "Canvas", "Casual"]
-    },
-    {
-      "title": "Best Game",
-      "description": "My Future featured game.",
-      "thumbnail": "./games/your-game/thumbnail.png",
-      "video": "./games/your-game/preview.mp4",
-      "playUrl": "./games/your-game/index.html",
-      "sourceUrl": "https://github.com/Shahid-Shaikh02/your-game-repo",
-      "tags": ["Genre", "Platform", "Style"]
-    }
-  ],
-  "unity": [
-    {
-      "title": "Unity Game Title",
-      "description": "Description of your Unity game with key features and gameplay highlights.",
-      "thumbnail": "./games/unity-game-1/thumbnail.png",
-      "video": "./games/unity-game-1/preview.mp4",
-      "playUrl": "./games/unity-game-1/index.html",
-      "sourceUrl": "https://github.com/Shahid-Shaikh02/unity-game-1",
-      "tags": ["Unity", "3D", "Action"]
-    },
-    {
-      "title": "Another Unity Game",
-      "description": "Another awesome Unity game showcasing different mechanics.",
-      "thumbnail": "./games/unity-game-2/thumbnail.png",
-      "video": "",
-      "playUrl": "./games/unity-game-2/index.html",
-      "sourceUrl": "https://github.com/Shahid-Shaikh02/unity-game-2",
-      "tags": ["Unity", "Puzzle", "Strategy"]
-    }
-  ],
-  "html": [
-    {
-      "title": "Ball Escape Game",
-      "description": "Ball Escape a Circular Path | Pure HTML5/JavaScript game.",
-      "thumbnail": "./games/web-game/ball-escapes-a-circular-trap/resources/thumb.jpg",
-      "video": "./games/web-game/ball-escapes-a-circular-trap/resources/preview.mp4",
-      "playUrl": "./games/web-game/ball-escapes-a-circular-trap/index.html",
-      "sourceUrl": "https://github.com/Shahid-Shaikh02/shodan-games/tree/main/games/web-game/ball-escapes-a-circular-trap",
-      "tags": ["HTML5", "Canvas", "Casual"]
-    },
-    {
-      "title": "HTML5 Game Title",
-      "description": "Pure HTML5/JavaScript game description highlighting unique features.",
-      "thumbnail": "./games/html-game-1/thumbnail.png",
-      "video": "",
-      "playUrl": "./games/html-game-1/index.html",
-      "sourceUrl": "https://github.com/Shahid-Shaikh02/html-game-1",
-      "tags": ["HTML5", "Canvas", "Casual"]
-    },
-    {
-      "title": "JavaScript Game",
-      "description": "Engaging JavaScript-based game with smooth animations.",
-      "thumbnail": "./games/html-game-2/thumbnail.png",
-      "video": "./games/html-game-2/preview.mp4",
-      "playUrl": "./games/html-game-2/index.html",
-      "sourceUrl": "",
-      "tags": ["HTML5", "Arcade", "Retro"]
-    }
-  ]
+  "categories": {
+    "html": [
+      "ball-escapes-a-circular-trap",
+      "snake-game"
+    ],
+    "unity": [
+      "space-shooter",
+      "ranch-simulator"
+    ]
+  }
 }
-
-
