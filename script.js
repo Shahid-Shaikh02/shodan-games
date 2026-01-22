@@ -1,239 +1,260 @@
-// Game Data Structure
-let gamesData = {
-  featured: [],
-  html: [],
-  unity: []
+// ==========================================
+// SHODAN GAMES - PORTFOLIO JAVASCRIPT
+// ==========================================
+
+// Configuration
+const CONFIG = {
+    gamesJsonPath: './games-list.json',
+    defaultThumbnail: null, // Set to a default image path if needed
+    enableVideoPreview: true,
+    enableAnalytics: false // Set to true if you add Google Analytics
 };
 
-// DOM REFERENCES
-const container = document.getElementById('gamesContainer');
+// Game data storage
+let gamesData = {
+    featured: [],
+    unity: [],
+    html: []
+};
 
-// SAFETY CHECK
-if (!container) {
-  console.error('gamesContainer not found in HTML');
-  throw new Error('Missing container');
-}
+// Initialize the portfolio
+document.addEventListener('DOMContentLoaded', () => {
+    loadGames();
+    setupEventListeners();
+});
 
-// Detect GitHub Pages subdirectory
-const isGitHubPages = window.location.hostname.includes('github.io');
-const basePath = isGitHubPages ? '/shodan-games/' : './';
-console.log(`Using base path: ${basePath}`);
+// Load games from JSON file
+async function loadGames() {
+    const loadingEl = document.getElementById('loading');
+    const emptyStateEl = document.getElementById('empty-state');
 
-// ============================================
-// LOAD ALL GAMES FROM CATEGORY STRUCTURE
-// ============================================
-async function loadAllGames() {
-  try {
-    console.log('Loading games list...');
-    
-    // Fetch games-list.json
-    const listResponse = await fetch(`${basePath}games-list.json`);
-    if (!listResponse.ok) {
-      throw new Error(`Failed to load games-list.json: ${listResponse.status}`);
-    }
-    
-    const gamesList = await listResponse.json().catch(err => {
-      console.error('Invalid JSON in games-list.json:', err);
-      throw new Error('games-list.json is corrupted');
-    });
-    
-    console.log('Games list loaded:', gamesList);
-    
-    // Loop through categories
-    for (const category in gamesList.categories) {
-      const gameFolders = gamesList.categories[category];
-      
-      for (const gameFolderName of gameFolders) {
-        try {
-          // Full path: games/web-game/ball-escapes-a-circular-trap/data.json
-          const folder = `${category}/${gameFolderName}`;
-          const dataPath = `${basePath}games/${folder}/data.json`;
-          
-          console.log(`Loading: ${dataPath}`);
-          
-          const response = await fetch(dataPath);
-          if (!response.ok) {
-            throw new Error(`HTTP ${response.status}`);
-          }
-          
-          const gameData = await response.json();
-          
-          // ========== FIX PATHS ==========
-const removeLeadingDot = (path) => path.startsWith('./') ? path.slice(2) : path;          
-          gameData.thumbnail = `${basePath}games/${folder}/${removeLeadingDot(gameData.thumbnail)}`;
-          console.log('DEBUG thumb:', gameData.thumbnail);
-          gameData.video = `${basePath}games/${folder}/${removeLeadingDot(gameData.video)}`;
-          gameData.link = `${basePath}games/${folder}/${removeLeadingDot(gameData.link)}`;
-          
-          console.log(`✅ Loaded: ${gameData.title}`, gameData);
-          
-          // Always add to category first
-          if (gameData.type === 'html') {
-            gamesData.html.push(gameData);
-          } else if (gameData.type === 'external') {
-            gamesData.unity.push(gameData);
-          }
-          
-          // Then also add to featured if marked
-          if (gameData.badge === 'hot' || gameData.featured === true) {
-            gamesData.featured.push(gameData);
-          }
-          
-        } catch (error) {
-          console.warn(`❌ Could not load game: ${gameFolderName}`, error.message);
+    try {
+        const response = await fetch(CONFIG.gamesJsonPath);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
         }
-      }
+        
+        gamesData = await response.json();
+        
+        // Hide loading
+        loadingEl.style.display = 'none';
+        
+        // Check if we have any games
+        const totalGames = (gamesData.featured?.length || 0) + 
+                          (gamesData.unity?.length || 0) + 
+                          (gamesData.html?.length || 0);
+        
+        if (totalGames === 0) {
+            emptyStateEl.style.display = 'block';
+        } else {
+            renderGames();
+        }
+        
+    } catch (error) {
+        console.error('Error loading games:', error);
+        loadingEl.innerHTML = `
+            <div style="color: #ff6b6b;">
+                <p>⚠️ Error loading games</p>
+                <p style="font-size: 0.9em;">Please check that games-list.json exists and is valid</p>
+            </div>
+        `;
     }
-    
-    console.log('Final gamesData:', gamesData);
-    initializeGames();
-    
-  } catch (error) {
-    console.error('❌ Error loading games:', error);
-  }
 }
 
-// ============================================
-// INITIALIZE GAME GRID
-// ============================================
-function initializeGames() {
-  const hasFeatured = gamesData.featured && gamesData.featured.length > 0;
-  const hasHTML = gamesData.html && gamesData.html.length > 0;
-  const hasUnity = gamesData.unity && gamesData.unity.length > 0;
-  
-  console.log(`Featured: ${hasFeatured}, HTML: ${hasHTML}, Unity: ${hasUnity}`);
-  
-  // Render Featured Games
-  if (hasFeatured) {
-    renderGames(gamesData.featured, 'gameGridFeatured');
-  } else {
-    const featuredGrid = document.getElementById('gameGridFeatured');
-    const featuredTitle = featuredGrid?.previousElementSibling;
-    if (featuredGrid) {
-      featuredGrid.style.display = 'none';
-      if (featuredTitle?.classList.contains('section-title')) {
-        featuredTitle.style.display = 'none';
-      }
+// Render all game categories
+function renderGames() {
+    // Render Featured Games
+    if (gamesData.featured && gamesData.featured.length > 0) {
+        renderGameSection('featured', gamesData.featured);
     }
-  }
-  
-  // Render HTML Games
-  if (hasHTML) {
-    renderGames(gamesData.html, 'gameGridHTML');
-  } else {
-    const htmlSection = document.getElementById('gameGridHTML');
-    if (htmlSection) {
-      htmlSection.parentElement.style.display = 'none';
+    
+    // Render Unity Games
+    if (gamesData.unity && gamesData.unity.length > 0) {
+        renderGameSection('unity', gamesData.unity);
     }
-  }
-  
-  // Render Unity Games
-  if (hasUnity) {
-    renderGames(gamesData.unity, 'gameGridUnity');
-  } else {
-    const unitySection = document.getElementById('gameGridUnity');
-    if (unitySection) {
-      unitySection.parentElement.style.display = 'none';
+    
+    // Render HTML5 Games
+    if (gamesData.html && gamesData.html.length > 0) {
+        renderGameSection('html', gamesData.html);
     }
-  }
-  
-  // Show empty state if no games
-  if (!hasFeatured && !hasHTML && !hasUnity) {
-    container.innerHTML = `
-      <div class="empty-state">
-        <h2>🎮 Coming Soon!</h2>
-        <p>Games will be added here soon. Check back later!</p>
-      </div>
-    `;
-  }
 }
 
-// ============================================
-// RENDER GAMES TO GRID
-// ============================================
-function renderGames(games, gridId) {
-  const grid = document.getElementById(gridId);
-  if (!grid) {
-    console.error(`Grid not found: ${gridId}`);
-    return;
-  }
-  
-  grid.innerHTML = '';
-  games.forEach(game => {
-    const gameCard = document.createElement('div');
-    gameCard.className = 'game-card';
-    gameCard.style.cursor = 'pointer';
+// Render a specific game section
+function renderGameSection(category, games) {
+    const sectionEl = document.getElementById(`${category}-section`);
+    const gamesGridEl = document.getElementById(`${category}-games`);
     
-    gameCard.innerHTML = `
-      <div class="game-card-media">
-        <img src="${game.thumbnail}" alt="${game.title}" class="game-card-image" loading="lazy" />
-        <video class="game-card-video" muted loop preload="metadata">
-          <source src="${game.video}" type="video/mp4" />
-        </video>
-        <div class="game-card-info">
-          <div class="game-title">${game.title}</div>
-          <div>
-            ${game.badge ? `<span class="game-badge ${game.badge}">${game.badge.toUpperCase()}</span>` : ''}
-          </div>
+    if (!sectionEl || !gamesGridEl) {
+        console.warn(`Section elements not found for category: ${category}`);
+        return;
+    }
+    
+    // Show section
+    sectionEl.style.display = 'block';
+    
+    // Create game cards
+    gamesGridEl.innerHTML = games.map(game => createGameCard(game)).join('');
+    
+    // Setup video preview handlers if enabled
+    if (CONFIG.enableVideoPreview) {
+        setupVideoHandlers(gamesGridEl);
+    }
+}
+
+// Create a game card HTML
+function createGameCard(game) {
+    const thumbnail = game.thumbnail || CONFIG.defaultThumbnail || '';
+    const hasVideo = game.video && CONFIG.enableVideoPreview;
+    const tags = game.tags || [];
+    
+    return `
+        <div class="game-card" data-game-title="${escapeHtml(game.title)}">
+            <div class="game-thumbnail" onclick="playGame('${escapeHtml(game.playUrl)}', '${escapeHtml(game.title)}')" style="cursor: pointer;">
+                ${thumbnail ? 
+                    `<img src="${escapeHtml(thumbnail)}" alt="${escapeHtml(game.title)}" loading="lazy">` : 
+                    `<div class="no-thumbnail">🎮</div>`
+                }
+                ${hasVideo ? 
+                    `<video muted loop preload="none">
+                        <source src="${escapeHtml(game.video)}" type="video/mp4">
+                    </video>` : 
+                    ''
+                }
+                <div class="play-overlay"></div>
+            </div>
+            <div class="game-info">
+                <h3 class="game-title">${escapeHtml(game.title)}</h3>
+                <p class="game-description">${escapeHtml(game.description)}</p>
+                <div class="game-tags">
+                    ${tags.map(tag => `<span class="tag">${escapeHtml(tag)}</span>`).join('')}
+                </div>
+                <div class="game-actions">
+                    <button class="btn btn-play" onclick="playGame('${escapeHtml(game.playUrl)}', '${escapeHtml(game.title)}')">
+                        ▶ Play Now
+                    </button>
+                    ${game.sourceUrl ? 
+                        `<a href="${escapeHtml(game.sourceUrl)}" target="_blank" rel="noopener" class="btn btn-source">
+                            📁 Source
+                        </a>` : 
+                        ''
+                    }
+                </div>
+            </div>
         </div>
-      </div>
     `;
-    
-    // Make entire card clickable
-    gameCard.addEventListener('click', () => playGame(game.link, game.type));
-    
-    // Video preview on hover
-    const video = gameCard.querySelector('.game-card-video');
-    gameCard.addEventListener('mouseenter', () => {
-      if (game.video) {
-        video.play().catch(err => console.warn('Video autoplay blocked:', err));
-      }
-    });
-    gameCard.addEventListener('mouseleave', () => {
-      video.pause();
-      video.currentTime = 0;
-    });
-    
-    grid.appendChild(gameCard);
-  });
+}
 
-// ============================================
-// HANDLE GAME PLAY
-// ============================================
-function playGame(link, type) {
-  try {
-    if (type === 'html') {
-      // Open local HTML game with correct base path
-      const gameLink = link.startsWith('/') ? link : `${basePath}${link}`;
-      window.location.href = gameLink;
-    } else if (type === 'external') {
-      // Open external game in new tab
-      window.location.href = link;
-    } else {
-      console.warn('Unknown game type:', type);
+// Setup video preview handlers
+function setupVideoHandlers(containerEl) {
+    const gameCards = containerEl.querySelectorAll('.game-card');
+    
+    gameCards.forEach(card => {
+        const video = card.querySelector('video');
+        if (!video) return;
+        
+        card.addEventListener('mouseenter', () => {
+            video.play().catch(err => {
+                console.log('Video play failed:', err);
+            });
+        });
+        
+        card.addEventListener('mouseleave', () => {
+            video.pause();
+            video.currentTime = 0;
+        });
+    });
+}
+
+// Play game in modal
+// Play game in a new tab
+function playGame(url, title) {
+    // Option 1: Open in a NEW tab (Recommended)
+    // window.open(url, '_blank');
+
+    // Option 2: Open in the SAME tab (Delete the line above and uncomment this one if you prefer)
+    window.location.href = url;
+    
+    // Keep Analytics (Optional)
+    if (CONFIG.enableAnalytics && typeof gtag !== 'undefined') {
+        gtag('event', 'play_game', {
+            'game_title': title,
+            'game_url': url
+        });
     }
-  } catch (error) {
-    console.error('Error playing game:', error);
-  }
 }
 
-// ============================================
-// SEARCH FUNCTIONALITY
-// ============================================
-const searchInput = document.getElementById('searchInput');
-if (searchInput) {
-  searchInput.addEventListener('input', function(e) {
-    const searchTerm = e.target.value.toLowerCase();
-    const allCards = document.querySelectorAll('.game-card');
-    allCards.forEach(card => {
-      const title = card.querySelector('.game-title').textContent.toLowerCase();
-      card.style.display = title.includes(searchTerm) ? '' : 'none';
+
+// old model for play game!!
+// function playGame(url, title) {
+//     const modal = document.getElementById('game-modal');
+//     const iframe = document.getElementById('game-frame');
+    
+//     iframe.src = url;
+//     modal.classList.add('active');
+//     document.body.style.overflow = 'hidden';
+    
+//     // Track game plays (if analytics enabled)
+//     if (CONFIG.enableAnalytics && typeof gtag !== 'undefined') {
+//         gtag('event', 'play_game', {
+//             'game_title': title,
+//             'game_url': url
+//         });
+//     }
+// }
+
+// Close game modal
+function closeGame() {
+    const modal = document.getElementById('game-modal');
+    const iframe = document.getElementById('game-frame');
+    
+    modal.classList.remove('active');
+    iframe.src = '';
+    document.body.style.overflow = 'auto';
+}
+
+// Setup event listeners
+function setupEventListeners() {
+    // Close modal on ESC key
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            closeGame();
+        }
     });
-  });
+    
+    // Close modal on background click
+    const modal = document.getElementById('game-modal');
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            closeGame();
+        }
+    });
 }
 
-// ============================================
-// INITIALIZE ON PAGE LOAD
-// ============================================
-window.addEventListener('load', loadAllGames);
+// Utility: Escape HTML to prevent XSS
+function escapeHtml(text) {
+    if (!text) return '';
+    const map = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+    };
+    return text.replace(/[&<>"']/g, m => map[m]);
 }
+
+// Error handling for images
+document.addEventListener('error', (e) => {
+    if (e.target.tagName === 'IMG') {
+        e.target.style.display = 'none';
+        const thumbnail = e.target.closest('.game-thumbnail');
+        if (thumbnail && !thumbnail.querySelector('.no-thumbnail')) {
+            thumbnail.innerHTML = '<div class="no-thumbnail">🎮</div>' + thumbnail.innerHTML;
+        }
+    }
+}, true);
+
+// Make functions globally accessible
+window.playGame = playGame;
+window.closeGame = closeGame;
