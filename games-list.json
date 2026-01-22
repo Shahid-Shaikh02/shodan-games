@@ -37,7 +37,7 @@
       "thumbnail": "./games/web-game/ball-escapes-a-circular-trap/resources/thumb.jpg",
       "video": "./games/web-game/ball-escapes-a-circular-trap/resources/preview.mp4",
       "playUrl": "./games/web-game/ball-escapes-a-circular-trap/index.html",
-      "sourceUrl": "https://github.com/Shahid-Shaikh02/html-game-1",
+      "sourceUrl": "https://github.com/Shahid-Shaikh02/shodan-games/tree/main/games/web-game/ball-escapes-a-circular-trap",
       "tags": ["HTML5", "Canvas", "Casual"]
     },
     {
@@ -60,3 +60,4 @@
     }
   ]
 }
+
