@@ -1,53 +1,84 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <meta name="description" content="Shodan Games - Play HTML and Unity games online">
-    <meta name="keywords" content="games, html games, unity games, online gaming">
+    <meta name="description" content="Shodan Games - Indie Game Developer Portfolio showcasing Unity and HTML5 games">
+    <meta name="keywords" content="game development, unity, html5 games, indie games, portfolio">
     <meta name="author" content="Shahid Shaikh">
-
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='75' font-size='75'>🎮</text></svg>">
-    <title>Shodan Games - Game Portfolio</title>
+    
+    <!-- Open Graph Meta Tags -->
+    <meta property="og:title" content="Shodan Games - Game Developer Portfolio">
+    <meta property="og:description" content="Check out my indie game portfolio featuring Unity and HTML5 games">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://shahid-shaikh02.github.io/shodan-games/">
+    
+    <title>Shodan Games - Portfolio</title>
+    
+    <!-- External CSS -->
     <link rel="stylesheet" href="style.css">
     
+    <!-- Favicon (optional - add your own) -->
+    <!-- <link rel="icon" type="image/png" href="favicon.png"> -->
 </head>
 <body>
-    <!-- Header -->
-    <header>
-        <div class="header-content">
-            <div class="logo">🎮 Shodan Games</div>
-            <div class="search-bar">
-                <input type="text" id="searchInput" placeholder="Search games and categories" />
-            </div>
+    <div class="container">
+        <!-- Header -->
+        <header>
+            <h1>🎮 Shodan Games</h1>
+            <p>Indie Game Developer Portfolio</p>
+        </header>
+
+        <!-- Loading State -->
+        <div id="loading" class="loading">
+            Loading games...
         </div>
-    </header>
 
-    <!-- Main Content -->
-    <div class="container" id="gamesContainer">
-        <section class="game-section">
-            <!-- Featured Games Section -->
-        <h2 class="section-title">Featured Games</h2>
-        <div class="games-grid" id="gameGridFeatured"></div>
+        <!-- Featured Games Section -->
+        <section id="featured-section" style="display: none;">
+            <h2 class="section-title">⭐ Featured Games</h2>
+            <div id="featured-games" class="games-grid"></div>
         </section>
 
-        <section class="game-section">
-            <!-- HTML/CSS/JS Games Section -->
-        <h2 class="section-title">HTML Games</h2>
-        <div class="games-grid" id="gameGridHTML"></div>
+        <!-- Unity Games Section -->
+        <section id="unity-section" style="display: none;">
+            <h2 class="section-title">🎯 Unity Games</h2>
+            <div id="unity-games" class="games-grid"></div>
         </section>
 
-        <section class="game-section">
-            <!-- Unity Games Section -->
-        <h2 class="section-title">Unity Games</h2>
-        <div class="games-grid" id="gameGridUnity"></div>
+        <!-- HTML5 Games Section -->
+        <section id="html-section" style="display: none;">
+            <h2 class="section-title">🌐 HTML5 Games</h2>
+            <div id="html-games" class="games-grid"></div>
         </section>
-        
+
+        <!-- Empty State (if no games found) -->
+        <div id="empty-state" class="empty-state" style="display: none;">
+            <h3>No Games Yet</h3>
+            <p>Games will appear here once you add them to games-list.json</p>
+        </div>
+
+        <!-- Footer -->
+        <footer>
+            <p>Made with ❤️ by Shodan</p>
+            <p>
+                <a href="mailto:shodansstudio@gmail.com">📧 Email</a>
+                <a href="https://www.youtube.com/@shodangp" target="_blank" rel="noopener">🎮 Gaming Channel</a>
+                <a href="https://www.youtube.com/@shodan_dev" target="_blank" rel="noopener">💻 Dev Channel</a>
+                <a href="https://github.com/Shahid-Shaikh02" target="_blank" rel="noopener">💼 GitHub</a>
+            </p>
+        </footer>
     </div>
-    
+
+    <!-- Game Modal -->
+    <div id="game-modal" class="modal">
+        <button class="close-modal" onclick="closeGame()" aria-label="Close game">✕</button>
+        <div class="modal-content">
+            <iframe id="game-frame" src="" title="Game Player"></iframe>
+        </div>
+    </div>
+
+    <!-- External JavaScript -->
     <script src="script.js"></script>
-    
 </body>
 </html>
