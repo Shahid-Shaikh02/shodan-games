@@ -2,7 +2,8 @@
   "categories": {
     "html": [
       "ball-escapes-a-circular-trap",
-      "snake-game"
+      "snake-game",
+      "2D Top-Down Car Game"
     ],
     "unity": [
       "space-shooter",
