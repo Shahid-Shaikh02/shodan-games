@@ -900,8 +900,7 @@ input[type=range].xxs-slider {
         border-radius: var(--radius-l);
     }
 
-    /* --- MOBILE CONTROLS (D-PAD) --- */
-    /* --- MOBILE CONTROLS (SPLIT LAYOUT) --- */
+    /* --- MOBILE CONTROLS (D-PAD & SPLIT LAYOUT) --- */
     #mobile-controls {
     display: none; /* Hidden on desktops */
     position: absolute; /* Anchors inside the black #viz container */
@@ -934,8 +933,8 @@ input[type=range].xxs-slider {
     }
 
     .dpad-btn {
-    width: 60px;
-    height: 60px;
+    width: 50px;
+    height: 50px;
     border-radius: var(--radius-m);
     background: rgba(150, 150, 150, 0.2); 
     backdrop-filter: blur(4px);
@@ -961,3 +960,70 @@ input[type=range].xxs-slider {
         display: flex;
     }
     }
+
+    /* --- FULLSCREEN RESPONSIVE OVERRIDES --- */
+
+/* 1. Let the whole body flex properly */
+body {
+    height: 100vh !important; /* Force exact viewport height */
+    width: 100vw !important;
+    overflow: hidden !important; /* Stop scrolling entirely */
+}
+
+/* 2. The main container should fill all available space */
+.widget-container {
+    height: 100% !important;
+    display: flex;
+    flex-direction: column;
+}
+
+/* 3. The game canvas MUST grow and stretch */
+.viz-container {
+    flex-grow: 1 !important; /* Take up all leftover space */
+    min-height: 0 !important; /* Allow it to shrink if needed */
+    height: auto !important;
+}
+
+/* 4. Make the control panel smaller on mobile */
+.control-grid {
+    flex-shrink: 0; /* Never shrink the sliders */
+    padding: 10px !important;
+}
+
+/* --- LANDSCAPE MODE SPECIFIC FIXES --- */
+@media screen and (orientation: landscape) and (max-height: 500px) {
+    /* Hide the top header text in landscape to save space */
+    .widget-header {
+        display: none !important;
+    }
+    
+    /* Make the bottom control grid side-scrolling instead of stacked */
+    .control-grid {
+        display: flex !important;
+        flex-direction: row !important;
+        flex-wrap: nowrap !important;
+        overflow-x: auto !important;
+        overflow-y: hidden !important;
+        padding: 5px !important;
+        height: auto !important;
+    }
+    
+    /* Shrink the items inside the control grid so they fit */
+    .xxs-row {
+        min-width: 150px !important; /* Prevent squashing */
+        flex: 0 0 auto !important;
+        margin-right: 15px;
+    }
+    
+    /* Adjust D-pad position for landscape */
+    #mobile-controls {
+        bottom: 10px;
+        left: 10px;
+        right: 10px;
+    }
+    
+    .dpad-btn {
+        width: 50px; /* Slightly smaller buttons */
+        height: 50px;
+    }
+}
