@@ -4,14 +4,45 @@
  */
 
 // 1. Setup App (UI + State)
+// Detect if the user is on a touch device
+const isMobile = window.matchMedia("(pointer: coarse)").matches;
+
+// Base settings for everyone
+const appParams = {
+    grip: { value: 0.8, min: 0.05, max: 1.0, step: 0.05, label: "Tire Grip" },
+    power: { value: 1200, min: 500, max: 2500, step: 100, label: "Engine Power" }
+};
+
+// ONLY add these sliders if the user is on a mobile device
+if (isMobile) {
+    appParams.dpadSize = { value: 50, min: 30, max: 90, step: 5, label: "D-Pad Size" };
+    appParams.dpadOpacity = { value: 0.2, min: 0.1, max: 0.8, step: 0.1, label: "Button Visibility" };
+}
+
+// Add the reset button at the very bottom
+appParams.reset = { type: 'button', label: 'Reset Car', onClick: (s) => resetCar(s) };
+
 const { state, ui } = WH.createApp({
     title: 'Car Vector Physics | @shodan_dev',
-    params: {
-        grip: { value: 0.8, min: 0.05, max: 1.0, step: 0.05, label: "Tire Grip" },
-        power: { value: 1200, min: 500, max: 2500, step: 100, label: "Engine Power" },
-        reset: { type: 'button', label: 'Reset Car', onClick: (s) => resetCar(s) }
-    }
+    params: appParams
 });
+
+// --- Instantly update buttons when sliders move ---
+if (isMobile) {
+    // Set initial CSS variables
+    document.documentElement.style.setProperty('--dpad-size', state.dpadSize + 'px');
+    document.documentElement.style.setProperty('--dpad-opacity', state.dpadOpacity);
+
+    // Listen for slider changes
+    window.addEventListener('widget-state-update', (e) => {
+        if (e.detail.key === 'dpadSize') {
+            document.documentElement.style.setProperty('--dpad-size', e.detail.value + 'px');
+        }
+        if (e.detail.key === 'dpadOpacity') {
+            document.documentElement.style.setProperty('--dpad-opacity', e.detail.value);
+        }
+    });
+}
 
 // 2. Initialize Internal State
 state.x = 0;

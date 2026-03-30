@@ -936,15 +936,23 @@ input[type=range].xxs-slider {
     }
 
     .dpad-btn {
-    width: 50px;
-    height: 50px;
+    /* Use the custom variables, with 50px as a fallback */
+    width: var(--dpad-size, 50px);
+    height: var(--dpad-size, 50px);
+    
     border-radius: var(--radius-m);
-    background: rgba(150, 150, 150, 0.2); 
+    
+    /* Use the custom opacity variable */
+    background: rgba(150, 150, 150, var(--dpad-opacity, 0.2)); 
+    
     backdrop-filter: blur(4px);
     -webkit-backdrop-filter: blur(4px);
     border: 2px solid var(--outline);
     color: var(--on-surface-default);
-    font-size: 24px;
+    
+    /* Keep the arrow icon perfectly scaled inside the button */
+    font-size: calc(var(--dpad-size, 50px) * 0.5);
+    
     font-weight: bold;
     display: flex;
     justify-content: center;
