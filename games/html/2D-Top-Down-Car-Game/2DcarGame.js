@@ -104,6 +104,86 @@ function setupMobileControls() {
 // Initialize the mobile controls
 setupMobileControls();
 
+// --- 3.8 ENGINE AUDIO MANAGER (WEB AUDIO API - SEAMLESS LOOP) ---
+const AudioContext = window.AudioContext || window.webkitAudioContext;
+const audioCtx = new AudioContext();
+
+let idleGain, speedGain, speedSource;
+let audioStarted = false;
+let contextResumed = false; // Tracks if the user has interacted
+
+const audioState = { idleVol: 0, speedVol: 0, speedPitch: 1.0 };
+let idleBuffer = null;
+let speedBuffer = null;
+
+// Preload the audio files directly into memory
+async function loadAudio(url) {
+    try {
+        const response = await fetch(url);
+        const arrayBuffer = await response.arrayBuffer();
+        return await audioCtx.decodeAudioData(arrayBuffer);
+    } catch (e) {
+        console.error("Error loading audio:", url, e);
+    }
+}
+
+// Load files and start them if the user already clicked
+Promise.all([
+    loadAudio('resources/car-idealing.wav'),   // Changed to .wav
+    loadAudio('resources/car-speeding.wav')  // Changed to .wav
+]).then(([idleBuf, speedBuf]) => {
+    idleBuffer = idleBuf;
+    speedBuffer = speedBuf;
+    // If the user tapped the screen while it was still downloading, start it now!
+    if (contextResumed && !audioStarted) {
+        initAudioNodes();
+    }
+});
+
+function initAudioNodes() {
+    if (!idleBuffer || !speedBuffer || audioStarted) return;
+
+    // Setup Idle Audio
+    idleGain = audioCtx.createGain();
+    idleGain.gain.value = 0;
+    idleGain.connect(audioCtx.destination);
+    
+    const idleSource = audioCtx.createBufferSource();
+    idleSource.buffer = idleBuffer;
+    idleSource.loop = true;
+    idleSource.connect(idleGain);
+    idleSource.start();
+
+    // Setup Speed Audio
+    speedGain = audioCtx.createGain();
+    speedGain.gain.value = 0;
+    speedGain.connect(audioCtx.destination);
+
+    speedSource = audioCtx.createBufferSource();
+    speedSource.buffer = speedBuffer;
+    speedSource.loop = true;
+    speedSource.connect(speedGain);
+    speedSource.start();
+
+    audioStarted = true;
+}
+
+// Browsers block autoplay. This unlocks the audio context on the first tap/click.
+function unlockAudio() {
+    if (!contextResumed) {
+        audioCtx.resume().then(() => {
+            contextResumed = true;
+            initAudioNodes(); // Will start the audio if buffers are already downloaded
+        });
+        window.removeEventListener('keydown', unlockAudio);
+        window.removeEventListener('touchstart', unlockAudio);
+    }
+}
+
+// Listen for PC keys or Mobile Screen touches to ignite the engine
+window.addEventListener('keydown', unlockAudio);
+window.addEventListener('touchstart', unlockAudio, { passive: true });
+
 // 4. Initialize Engine
 WH.initCanvas('viz', (ctx) => {
     
@@ -255,6 +335,62 @@ WH.initCanvas('viz', (ctx) => {
             { label: "Slip", value: `${Math.round(sideSpeed)} px/s` },
             { label: "Grip Status", value: state.grip > 0.5 ? "Sticky" : "Drifty" }
         ]);
+
+        // --- 4. DYNAMIC ENGINE AUDIO (DUAL FILES / 5 PHASES) ---
+        if (audioStarted) {
+            let idleTargetVol = 0;
+            let speedTargetVol = 0;
+            let speedTargetPitch = 1.0;
+
+            // Phase 0: Idle (Grum Grum)
+            if (currentSpeedKmH === 0) {
+                idleTargetVol = 0.6; // Hear the idle clearly
+                speedTargetVol = 0.0; // Silence the speeding audio
+                speedTargetPitch = 0.5; // Base pitch
+            } 
+            // Phase 1: Lowest (1-5 km/h)
+            else if (currentSpeedKmH <= 5) {
+                idleTargetVol = 0.3;  // Fade idle out
+                speedTargetVol = 0.3; // Fade speed in
+                speedTargetPitch = 0.7;
+            } 
+            // Phase 2: Medium (6-20 km/h)
+            else if (currentSpeedKmH <= 20) {
+                idleTargetVol = 0.1;
+                speedTargetVol = 0.5;
+                speedTargetPitch = 1.0;
+            } 
+            // Phase 3: Upper Medium (21-60 km/h)
+            else if (currentSpeedKmH <= 60) {
+                idleTargetVol = 0.0;  // Idle is completely silent now
+                speedTargetVol = 0.7;
+                speedTargetPitch = 1.3;
+            } 
+            // Phase 4: High (61-120 km/h)
+            else if (currentSpeedKmH <= 120) {
+                idleTargetVol = 0.0;
+                speedTargetVol = 0.9;
+                speedTargetPitch = 1.6;
+            } 
+            // Phase 5: Max (121+ km/h)
+            else {
+                idleTargetVol = 0.0;
+                speedTargetVol = 1.0; // Max Volume
+                speedTargetPitch = 2.0; // Max Pitch screaming
+            }
+
+            // Smoothly interpolate (fade) the audio using the new Web Audio state
+            audioState.idleVol += (idleTargetVol - audioState.idleVol) * 0.1;
+            audioState.speedVol += (speedTargetVol - audioState.speedVol) * 0.1;
+            audioState.speedPitch += (speedTargetPitch - audioState.speedPitch) * 0.1;
+
+            // Apply the smoothed values instantly to the Web Audio Nodes
+            if (idleGain && speedGain && speedSource) {
+                idleGain.gain.value = audioState.idleVol;
+                speedGain.gain.value = audioState.speedVol;
+                speedSource.playbackRate.value = audioState.speedPitch;
+            }
+        }
     };
 });
 
