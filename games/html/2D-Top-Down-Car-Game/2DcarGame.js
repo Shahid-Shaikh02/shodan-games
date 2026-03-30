@@ -226,3 +226,40 @@ WH.initCanvas('viz', (ctx) => {
         ]);
     };
 });
+
+// --- Menu Toggle Logic (Dynamic Injection) ---
+function setupSettingsMenu() {
+    const controlsMenu = document.getElementById('controls-root');
+    const vizContainer = document.getElementById('viz');
+
+    if (vizContainer && controlsMenu) {
+        // 1. Create the button dynamically so it definitely exists inside the canvas
+        const settingsBtn = document.createElement('button');
+        settingsBtn.id = 'settings-toggle';
+        settingsBtn.textContent = '⚙️ Settings';
+        
+        // Append it directly to the black canvas so it's always relative to it
+        vizContainer.appendChild(settingsBtn);
+
+        // 2. Move the controls menu into the canvas area too, so it floats properly
+        vizContainer.appendChild(controlsMenu);
+
+        // 3. Fix the Click Logic
+        settingsBtn.addEventListener('click', (e) => {
+            e.preventDefault(); // Stop the canvas from eating the click
+            e.stopPropagation();
+            controlsMenu.classList.toggle('menu-open');
+        });
+
+        // Optional: Auto-close the menu if the user touches the game screen to drive
+        vizContainer.addEventListener('touchstart', (e) => {
+            // Only close if they didn't click the settings button itself
+            if (e.target.id !== 'settings-toggle') {
+                controlsMenu.classList.remove('menu-open');
+            }
+        }, { passive: true });
+    }
+}
+
+// Initialize the menu (slight delay ensures Widget Shell has built the UI)
+setTimeout(setupSettingsMenu, 500);

@@ -961,69 +961,77 @@ input[type=range].xxs-slider {
     }
     }
 
-    /* --- FULLSCREEN RESPONSIVE OVERRIDES --- */
+/* --- FULLSCREEN & FLOATING MENU OVERRIDES --- */
 
-/* 1. Let the whole body flex properly */
+/* Force the game to take over the whole screen */
 body {
-    height: 100vh !important; /* Force exact viewport height */
+    height: 100vh !important;
     width: 100vw !important;
-    overflow: hidden !important; /* Stop scrolling entirely */
+    overflow: hidden !important;
 }
 
-/* 2. The main container should fill all available space */
-.widget-container {
-    height: 100% !important;
-    display: flex;
-    flex-direction: column;
-}
-
-/* 3. The game canvas MUST grow and stretch */
-.viz-container {
-    flex-grow: 1 !important; /* Take up all leftover space */
-    min-height: 0 !important; /* Allow it to shrink if needed */
-    height: auto !important;
-}
-
-/* 4. Make the control panel smaller on mobile */
-.control-grid {
-    flex-shrink: 0; /* Never shrink the sliders */
-    padding: 10px !important;
-}
-
-/* --- LANDSCAPE MODE SPECIFIC FIXES --- */
-@media screen and (orientation: landscape) and (max-height: 500px) {
-    /* Hide the top header text in landscape to save space */
+/* Hide the old widget header text to save space on mobile */
+@media screen and (max-height: 500px) {
     .widget-header {
         display: none !important;
     }
+}
+
+/* Make the black game canvas fill available space */
+.viz-container {
+    position: relative !important; /* Critical: Anchors the button and menu */
+    flex-grow: 1 !important;
+    min-height: 0 !important;
+    height: auto !important;
+    z-index: 1;
+}
+
+/* 3. Style the new Settings Button (Anchored to Canvas Top-Center) */
+#settings-toggle {
+    position: absolute;
+    top: 15px; /* 15px from the top of the black canvas */
+    left: 50%;
+    transform: translateX(-50%); /* Perfectly centers it */
+    z-index: 1000;
+    padding: 8px 20px;
+    border-radius: 20px;
+    background: rgba(30, 35, 45, 0.7);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 2px solid var(--outline);
+    color: white;
+    font-weight: bold;
+    font-size: 14px;
+    cursor: pointer;
+    /* Prevent the game physics from intercepting touches on the button */
+    pointer-events: auto !important; 
+}
+
+/* 4. Turn the Control Grid (Sliders) into a dropdown menu */
+.control-grid {
+    position: absolute !important;
+    top: 65px !important; /* Drops down just below the button inside the canvas */
+    left: 50% !important;
+    transform: translateX(-50%);
+    width: 90% !important;
+    max-width: 350px !important;
+    z-index: 999 !important;
     
-    /* Make the bottom control grid side-scrolling instead of stacked */
-    .control-grid {
-        display: flex !important;
-        flex-direction: row !important;
-        flex-wrap: nowrap !important;
-        overflow-x: auto !important;
-        overflow-y: hidden !important;
-        padding: 5px !important;
-        height: auto !important;
-    }
+    /* Glassmorphism panel styling */
+    background: rgba(30, 35, 45, 0.95) !important;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--outline) !important;
+    border-radius: var(--radius-l) !important;
+    padding: 20px !important;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.7);
     
-    /* Shrink the items inside the control grid so they fit */
-    .xxs-row {
-        min-width: 150px !important; /* Prevent squashing */
-        flex: 0 0 auto !important;
-        margin-right: 15px;
-    }
-    
-    /* Adjust D-pad position for landscape */
-    #mobile-controls {
-        bottom: 10px;
-        left: 10px;
-        right: 10px;
-    }
-    
-    .dpad-btn {
-        width: 50px; /* Slightly smaller buttons */
-        height: 50px;
-    }
+    /* HIDDEN BY DEFAULT */
+    display: none !important; 
+    flex-direction: column !important;
+}
+
+/* 5. The class we add using JavaScript to show the menu */
+.control-grid.menu-open {
+    display: flex !important;
 }
