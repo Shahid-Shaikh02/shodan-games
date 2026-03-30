@@ -1,0 +1,963 @@
+/*-- 2. CSS Design System -- */
+/* --- 1. TOKEN DEFINITIONS --- */      :root {
+        --primary: #0B57D0; --on-primary: #FFFFFF; --primary-container: #D3E3FD; --on-primary-container: #041E49;
+        --secondary: #00639B; --on-secondary: #FFFFFF; --secondary-container: #C2E7FF;
+        --tertiary: #146C2E; --on-tertiary: #FFFFFF; --tertiary-container: #C4EED0; --on-tertiary-container: #0F5223;
+
+        --surface: #FFFFFF; --surface-container: #F0F4F9; --surface-container-high: #E9EBF0;
+        --surface-container-lowest: var(--surface); --surface-container-low: var(--surface-container); --surface-container-highest: #dee1e3;
+        --on-surface-default: #1B1C1D; --on-surface-de-emphasis: #444746; --on-surface-primary: #0B57D0;
+        --on-primary-hover: #FFFFFF;
+        --primary-hover: #0A45B4; --highlight: #D3E3FD;
+
+        --outline: #747775; --outline-variant: #C4C7C5;
+        --stroke-default: #DCDFE5; --stroke-emphasis: #80858C;
+
+        --error: #B3261E; --on-error: #FFFFFF;
+        --success: #146C2E; --on-success: #FFFFFF;
+        --warning: #F9AB00; --on-warning: #FFFFFF;
+        --positive: #146C2E; --positive-surface: #C4EED0; --negative: #B3261E; --negative-surface: #FFCDD2;
+
+        --chart-1: #1558D6; --chart-2: #046E00; --chart-3: #EAA937; --chart-4: #C0151D; --chart-5: #681DA8; --chart-6: #D85900;
+
+        --anno-red: #FE8983; --anno-orange: #FF8D41; --anno-yellow: #FCBE00; --anno-green: #44C265;
+        --anno-cyan: #06BBDF; --anno-blue: #76ACFF; --anno-purple: #C598FF; --anno-pink: #FF7DD2;
+
+        --glass-surface: rgba(255, 255, 255, 0.65);
+        --ff-sans: "Google Sans", "Roboto", sans-serif;
+        --ff-mono: "Google Code", "SF Mono", "Roboto Mono", monospace;
+        --ff-latex: "Times New Roman", serif;
+        --fs-100: 0.75rem; --fs-200: 0.875rem; --fs-300: 1rem; --fs-400: 1.125rem; --fs-500: 1.25rem; --fs-600: 1.5rem;
+        --fw-regular: 400; --fw-medium: 500; --fw-bold: 700;
+
+        /* SPACING SYSTEM */
+        --space-xxs: 0.125rem; /* 2px */
+        --space-xs: 0.25rem;  /* 4px */
+        --space-s: 0.5rem;    /* 8px */
+        --space-m: 0.75rem;   /* 12px */
+        --space-l: 1rem;      /* 16px */
+        --space-xl: 1.25rem;  /* 20px */
+        --space-xxl: 1.5rem;  /* 24px */
+        --space-3xl: 1.75rem; /* 28px */
+
+        /* CORNER RADIUS */
+        --radius-xs: 4px;
+        --radius-s: 8px;
+        --radius-m: 12px;
+        --radius-l: 16px;
+        --radius-xl: 28px;
+        --radius-full: 999px;
+
+        /* BORDER */
+        --border-thin: 1px;
+        --border-medium: 2px;
+        --border-thick: 3px;
+
+        /* SIZING SCALE (Tailwind-like 4px grid) */
+        --s-0-5: 2px;
+        --s-1: 4px;
+        --s-1-5: 6px;
+        --s-2: 8px;
+        --s-3: 12px;
+        --s-4: 16px;
+        --s-4-5: 18px;
+        --s-5: 20px;
+        --s-6: 24px;
+        --s-6-5: 26px;
+        --s-8: 32px;
+        --s-9: 36px;  /* Standard Input Height */
+        --s-11: 44px; /* Min Touch Target */
+        --s-12: 48px;
+        --s-14: 56px;
+        --s-24: 96px;
+        --s-30: 120px;
+        --s-35: 140px;
+        --s-40: 180px;
+        --s-50: 200px;
+        --s-60: 240px;
+        --s-62: 250px;
+      }
+
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --primary: #A8C7FA; --on-primary: #062E6F; --primary-container: #1F3760; --on-primary-container: #D3E3FD;
+          --secondary: #7FCFFF; --on-secondary: #003355; --secondary-container: #004A77;
+          --tertiary: #6DD58C; --on-tertiary: #0A3818; --tertiary-container: #0F5223; --on-tertiary-container: #C4EED0;
+
+          --surface: #101218; --surface-container: #282A2C; --surface-container-high: #2A2B36;
+          --surface-container-lowest: var(--surface); --surface-container-low: var(--surface-container); --surface-container-highest: #3a3f50;
+          --on-surface-default: #FFFFFF; --on-surface-de-emphasis: #C4C7C5; --on-surface-primary: #A8C7FA;
+          --primary-hover: #75ABFB; --highlight: #223A94;
+
+          --outline: #9A9B9C; --outline-variant: #4A5050;
+          --stroke-default: #2D2F38; --stroke-emphasis: #ADAFB8;
+
+          --error: #F2B8B5; --on-error: #601410;
+          --success: #6DD58C; --on-success: #0A3818;
+          --warning: #FCBD00; --on-warning: #3F2F00;
+          --positive: #6DD58C; --positive-surface: #1F3025; --negative: #F2B8B5; --negative-surface: #381A21;
+
+          --chart-1: #5292F9; --chart-2: #90E58C; --chart-3: #F5B84F; --chart-4: #FF878F; --chart-5: #A56EFF; --chart-6: #FFB787;
+          --glass-surface: rgba(30, 35, 45, 0.65);
+        }
+      }
+
+      :root[data-theme="dark"] {
+          --primary: #A8C7FA; --on-primary: #062E6F; --primary-container: #1F3760; --on-primary-container: #D3E3FD;
+          --secondary: #7FCFFF; --on-secondary: #003355; --secondary-container: #004A77;
+          --tertiary: #6DD58C; --on-tertiary: #0A3818; --tertiary-container: #0F5223; --on-tertiary-container: #C4EED0;
+
+          --surface: #101218; --surface-container: #282A2C; --surface-container-high: #2A2B36;
+          --surface-container-lowest: var(--surface); --surface-container-low: var(--surface-container); --surface-container-highest: #3a3f50;
+          --on-surface-default: #FFFFFF; --on-surface-de-emphasis: #C4C7C5; --on-surface-primary: #A8C7FA;
+          --primary-hover: #75ABFB; --highlight: #223A94;
+
+          --outline: #9A9B9C; --outline-variant: #4A5050;
+          --stroke-default: #2D2F38; --stroke-emphasis: #ADAFB8;
+
+          --error: #F2B8B5; --on-error: #601410;
+          --success: #6DD58C; --on-success: #0A3818;
+          --warning: #FCBD00; --on-warning: #3F2F00;
+          --positive: #6DD58C; --positive-surface: #1F3025; --negative: #F2B8B5; --negative-surface: #381A21;
+
+          --chart-1: #5292F9; --chart-2: #90E58C; --chart-3: #F5B84F; --chart-4: #FF878F; --chart-5: #A56EFF; --chart-6: #FFB787;
+          --glass-surface: rgba(30, 35, 45, 0.65);
+      }
+
+/* --- 2. RESET & BASE --- */      *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-font-smoothing: antialiased; }
+      html, body { height: 100%; overflow: hidden; font-family: var(--ff-sans); font-size: var(--fs-300); line-height: 1.5; background-color: var(--surface-container); color: var(--on-surface-default); padding: var(--space-s); box-sizing: border-box; border-radius: var(--radius-xl); }
+      h1, h2, h3 { font-weight: var(--fw-medium); line-height: 1.25; }
+      h1 { font-size: var(--fs-600); } h2 { font-size: var(--fs-500); } h3 { font-size: var(--fs-400); }
+
+      /* CANVAS & SVG STANDARDIZATION */
+      
+      /* 1. Container Reset */
+      .viz-container figure { margin: 0; display: flex; flex-direction: column; height: 100%; width: 100%; }
+      .viz-container svg { overflow: visible !important; font-family: var(--ff-sans) !important; }
+      
+      /* 2. Text & Typography */
+      .viz-container svg text { 
+          fill: var(--on-surface-default) !important; 
+          font-size: 11px !important; 
+          font-family: var(--ff-sans) !important;
+          font-variant-numeric: tabular-nums; 
+      }
+      .viz-container svg text[aria-label="tip"] { font-weight: var(--fw-bold); } /* Tooltip values bold */
+
+      /* 3. Axes, Ticks, & Grids */
+      .viz-container svg path.domain { stroke: var(--outline) !important; stroke-width: var(--border-thin); }
+      .viz-container svg .tick line { stroke: var(--outline-variant) !important; }
+      .viz-container svg .grid line { stroke: var(--surface-container-highest) !important; stroke-opacity: 0.5; }
+      
+      /* 4. Legends (Observable Plot "Swatches") */
+      /* Forces the legend to the top-left, matching UI text styles */
+      .plot-swatches { 
+          font-family: var(--ff-sans) !important; 
+          font-size: var(--fs-100) !important; 
+          margin-bottom: var(--space-s) !important; 
+          color: var(--on-surface-de-emphasis) !important; 
+          display: flex; flex-wrap: wrap; gap: var(--space-s);
+      }
+
+
+/* --- 3. LAYOUT HELPERS --- */      .widget-container { background: var(--surface-container); height: 100%; display: flex; flex-direction: column; overflow: hidden; border-radius: var(--radius-xl); }
+      .viz-container { 
+        position: relative; 
+        overflow: hidden; 
+        flex: 1 1 0;
+        min-height: var(--s-50); /* 200px */
+        display: flex;
+        flex-direction: column;
+        padding: 0 var(--space-m); 
+      }
+      .flex { display: flex; }
+      .flex-col { display: flex; flex-direction: column; }
+      .flex-row { display: flex; flex-direction: row; }
+      .flex-wrap { flex-wrap: wrap; }
+      .grow { flex-grow: 1; }
+      .shrink-0 { flex-shrink: 0; }
+      .items-center { align-items: center; } .justify-between { justify-content: space-between; } .justify-center { justify-content: center; } .items-baseline { align-items: baseline; }
+      .gap-s { gap: var(--space-s); } .gap-m { gap: var(--space-m); } .gap-xs { gap: var(--space-xs); } .gap-xxs { gap: var(--space-xxs); }
+      .p-s { padding: var(--space-s); } .p-m { padding: var(--space-m); } .px-m { padding-left: var(--space-m); padding-right: var(--space-m); } .py-s { padding-top: var(--space-s); padding-bottom: var(--space-s); }
+      .m-m { margin: var(--space-m); } .mt-m { margin-top: var(--space-m); }
+      .border-t { border-top: var(--border-thin) solid var(--stroke-default); } .rounded-md { border-radius: var(--radius-s); }
+      .bg-surface { background-color: var(--surface); } .bg-surface-container { background-color: var(--surface-container); }
+      .relative { position: relative; } .w-full, .w-100 { width: 100%; } .w-min-content { min-width: min-content; } .h-full, .h-100 { height: 100%; }
+      .hidden { display: none !important; }
+
+      .widget-ui-part {
+        padding: var(--space-m) var(--space-s);
+        gap: var(--s-1) var(--space-m);
+      }
+
+/* --- SHELL UPDATE: Stable Header Layout --- */
+
+.widget-header {
+    display: flex;
+    flex-direction: column; /* Stack Top and Bottom rows */
+    gap: var(--space-xs); /* Small gap between Title line and Status line */
+    padding: var(--space-m) var(--space-m) var(--space-s);
+    background: var(--surface-container);
+    flex-shrink: 0;
+    
+    /* Optional: Subtle separator from canvas */
+    border-bottom: var(--border-thin) solid transparent; 
+}
+
+/* Row 1: Title & Data */
+.header-top {
+    display: flex;
+    justify-content: space-between; /* Push Title Left, Dash Right */
+    align-items: center;
+    width: 100%;
+    gap: var(--space-m); /* Min gap if they get close */
+    min-height: 44px;    /* Lock height to match dashboard pill height */
+}
+
+.widget-title {
+    font-size: var(--fs-600);
+    font-weight: var(--fw-medium);
+    line-height: 1.25;
+    color: var(--on-surface-default);
+    margin: 0;
+    white-space: nowrap;
+}
+
+/* Row 2: Status Text */
+.header-status {
+    color: var(--on-surface-de-emphasis);
+    font-size: var(--fs-200);
+    font-weight: var(--fw-medium);
+    line-height: 1.4;
+    
+    width: 100%;
+    min-height: 0;
+    
+    transition: opacity 0.2s;
+}
+
+/* Ensure Dashboard pushes to the right */
+.widget-dashboard {
+    margin-left: auto;
+}
+
+/* Mobile Tweak: Keep Title and Dash on same line if possible, stack Status below */
+@media (max-width: 500px) {
+    .header-top {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--space-s);
+    }
+    .widget-dashboard {
+        margin-left: 0;
+        width: 100%;
+    }
+    .viz-container {
+        min-height: var(--s-50);
+    }
+}
+
+/* --- XXS WIDGET SYSTEM --- */
+:root { 
+     --xxs-h: var(--s-8); /* 32px */
+     --xxs-radius-pill: var(--radius-full); 
+    --xxs-radius-active: var(--s-1-5); /* 6px - Tighter radius for the morph effect */
+ }
+
+/* 1. Layout Engine */
+.control-grid {
+    display: flex !important; flex-wrap: wrap; 
+    column-gap: var(--space-s);
+    row-gap: var(--space-s);
+    align-content: flex-start; padding: var(--space-m) var(--space-m); width: 100%;
+    
+    /* SCROLLING BEHAVIOR RESTORED */
+    max-height: 40vh;       /* Limit to 40% of viewport height */
+    overflow-y: auto;       /* Scroll if content exceeds limit */
+    overscroll-behavior: contain; /* Prevent scrolling the parent page */
+    
+    background: var(--surface-container);
+    border-radius: 0 0 var(--radius-l) var(--radius-l);
+    border: none;
+    z-index: 10;
+}
+
+.widget-contained .control-grid {
+  border-top: var(--border-thin) solid var(--outline);
+  padding: var(--space-m);
+}
+
+/* Thin Scrollbar for Controls */
+.control-grid::-webkit-scrollbar { width: var(--s-1-5); }
+.control-grid::-webkit-scrollbar-track { background: transparent; }
+.control-grid::-webkit-scrollbar-thumb { 
+    background-color: var(--outline); 
+    border-radius: var(--radius-xs); 
+}
+.control-grid::-webkit-scrollbar-thumb:hover { background-color: var(--on-surface-de-emphasis); }
+
+
+
+.xxs-row { display: grid; align-items: center; gap: var(--space-s); min-width: 0; }
+.xxs-row.full { flex: 1 1 100%; }
+
+/* 1. Base Compact Rule (Toggles, Inputs, Segmented) */
+/* Allows 2-up on mobile (140px + 140px < 420px) */
+.xxs-row.compact { flex: 1 1 45%; min-width: var(--s-35); /* 140px */ }
+
+/* NEW: Segmented Controls need more room than toggles */
+/* This forces them to wrap on mobile, preventing label crushing */
+.xxs-row.segmented { min-width: var(--s-60); /* 240px */ }
+
+/* 2. Slider Specific Rule (Needs Length) */
+/* Label column width: 180px default, dynamically calibrated by JS at init */
+.xxs-row.standard { 
+    min-width: var(--s-62); /* 250px */
+    grid-template-columns: var(--s-40) 1fr var(--s-14); /* 180px 1fr 56px */
+}
+
+/* 3. INPUTS: Label hugs text, Input fills space */
+.xxs-row.compact.input { grid-template-columns: var(--s-30) 1fr; }
+
+.xxs-row.input.input-text,
+.xxs-row.input.input-date,
+.xxs-row.input.select {
+  min-width: var(--s-60);
+}
+
+/* NEW: TOGGLES: Label fills space, Switch aligned Right */
+.xxs-row.compact.toggle { grid-template-columns: var(--s-30) 1fr; }
+
+@media (max-width: 600px) {
+  .xxs-row.standard { 
+    grid-template-columns: var(--s-35) 1fr var(--s-14); /* 140px 1fr 56px */
+  }
+  .xxs-row.compact.input { grid-template-columns: var(--s-24) 1fr; }
+  .xxs-row.compact.toggle { grid-template-columns: var(--s-24) 1fr; }
+
+}
+
+.xxs-row.header { flex: 1 1 100%; padding-top: var(--space-m); grid-template-columns: 1fr; border-top: var(--border-thin) solid var(--outline); }
+.xxs-row.header:first-child { border-top: none; padding-top: 0; }
+
+.xxs-label { 
+    color: var(--on-surface-default);
+    font-size: var(--fs-200);
+    font-weight: var(--fw-medium);
+    white-space: nowrap; 
+    overflow: hidden; 
+    
+    /* CHANGE: Replaced ellipsis with a fade mask */
+    text-overflow: clip; /* Stop adding dots */
+    mask-image: linear-gradient(to right, black 80%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to right, black 80%, transparent 100%);
+}
+
+/* NEW: Action Bar Layout */
+.xxs-actions {
+    flex: 1 1 100%;
+    display: flex; gap: var(--space-xs); margin-top: var(--space-s);
+}
+.xxs-actions .xxs-btn {
+    flex: 1; /* Distribute width evenly */
+    height: var(--s-8); /* 32px */
+    display: inline-flex; align-items: center; justify-content: center;
+}
+
+/* 2. Sliders & Pills */
+.xxs-slider-wrap { width: 100%; height: var(--xxs-h); display: flex; align-items: center; position: relative; }
+input[type=range].xxs-slider { -webkit-appearance: none; appearance: none; width: 100%; height: 100%; background: transparent; margin: 0; cursor: pointer; outline: none; z-index: 2; }
+input[type=range].xxs-slider::-webkit-slider-runnable-track {
+    width: 100%; height: var(--s-1-5); /* 6px */ border-radius: 3px; /* Revert to thick track */
+    background: linear-gradient(to right, var(--primary) 0%, var(--primary) var(--progress, 0%), var(--outline) var(--progress, 0%), var(--outline) 100%);
+    transition: background 0.1s;
+}
+input[type=range].xxs-slider::-webkit-slider-thumb {
+    -webkit-appearance: none; height: 22px; width: var(--s-1-5); /* 6px */
+    border-radius: var(--xxs-radius-pill); background: var(--primary); margin-top: -8px; 
+    box-shadow: 0 0 0 2px var(--surface); transition: all 0.2s cubic-bezier(0.2, 1.2, 0.2, 1);
+}
+input[type=range].xxs-slider:active::-webkit-slider-thumb { width: var(--s-1); height: var(--s-6); margin-top: -9px; box-shadow: 0 0 0 3px var(--surface); }
+
+/* SLIDER FOCUS STATE */
+input[type=range].xxs-slider:focus-visible::-webkit-slider-thumb {
+    box-shadow: 0 0 0 2px var(--surface), 0 0 0 3px var(--primary);
+}
+input[type=range].xxs-slider:focus-visible::-moz-range-thumb {
+    box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--primary);
+}
+
+
+/* READOUT STYLE NUMBERS */
+.xxs-val-pill {
+    width: 100%; height: var(--s-9); /* 36px */
+    border: var(--border-thin) solid var(--outline); 
+    background: transparent;
+    border-radius: var(--radius-m); /* 12px */
+    font-variant-numeric: tabular-nums;
+    padding: 0 var(--space-s);
+    color: var(--on-surface-default); 
+    appearance: none;
+    
+    /* Borderless default */
+    outline: none; transition: 0.2s; 
+    -moz-appearance: textfield;
+}
+/* Show container on hover/focus */
+.xxs-val-pill:focus { box-shadow: 0 0 0 2px var(--surface), 0 0 0 3px var(--primary); }
+
+.xxs-val-pill::-webkit-outer-spin-button,
+.xxs-val-pill::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Firefox */
+.xxs-val-pill[type=number] {
+    appearance: none;
+    -moz-appearance: textfield;
+}
+
+/* General property for modern browsers (currently limited support for this specific use case) */
+.xxs-val-pill[type=number] {
+  appearance: textfield;
+}
+
+/* TOGGLE SWITCHES */
+.xxs-switch {
+    width: var(--s-11);  /* 44px */
+    height: var(--s-6);  /* 24px */
+    margin-top: var(--s-1-5); /* 6px */
+    margin-bottom: var(--s-1-5); /* 6px */
+    background: var(--surface-container-high);
+    border-radius: var(--radius-full);
+    position: relative;
+    cursor: pointer;
+    transition: background 0.2s, box-shadow 0.2s, border-color 0.2s;
+    border: var(--border-thin) solid var(--outline);
+    flex-shrink: 0; /* Don't squash */
+}
+.xxs-switch:hover { border-color: var(--on-surface-de-emphasis); }
+
+/* SWITCH FOCUS STATE */
+.xxs-switch:focus-visible,
+input[type="checkbox"]:focus-visible + .xxs-switch {
+    outline: 0;
+    box-shadow: 0 0 0 2px var(--surface), 0 0 0 3px var(--primary);
+
+}
+
+.xxs-switch .knob {
+    width: var(--s-4-5); height: var(--s-4-5); /* 18px */
+    background: var(--on-surface-de-emphasis); /* Off state knob color */
+    border-radius: 50%;
+    position: absolute;
+    top: var(--s-0-5); left: var(--s-0-5); /* 2px */
+    transition: transform 0.25s cubic-bezier(0.3, 1.3, 0.3, 1), background 0.2s;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+
+.xxs-switch.active {
+    background: var(--primary);
+    border-color: var(--primary);
+}
+
+.xxs-switch.active .knob {
+    background: var(--on-primary); /* On state knob color */
+    transform: translateX(var(--s-5)); /* 20px */
+}
+
+/* 3. Inputs & Buttons */
+/* FILLED INPUT STYLE */
+.xxs-input, .xxs-select {
+    height: var(--s-9); /* 36px */
+    width: 100%;
+    min-width: var(--s-14); /* 56px */
+    
+    /* RESET: Standard Box Model */
+    border: var(--border-thin) solid transparent;
+    background-color: var(--surface-container-high);
+    
+    border-radius: var(--radius-m); /* 12px */
+    padding: 0 var(--space-xs);
+    color: var(--on-surface-default); outline: none;
+    transition: background-color 0.2s, border-color 0.2s;
+}
+
+@media (prefers-color-scheme: dark) {
+    input[type="date"]::-webkit-calendar-picker-indicator {
+        filter: invert(1);
+    }
+}
+
+[data-theme="dark"] input[type="date"]::-webkit-calendar-picker-indicator {
+   filter: invert(1);
+}
+
+/* Fix background image position for Select due to new borders */
+.xxs-select { 
+    /* HIDE NATIVE ARROW */
+    -webkit-appearance: none; -moz-appearance: none; appearance: none;
+    background-color: var(--surface);
+    border: var(--border-thin) solid var(--outline);
+    border-radius: var(--radius-m); /* 12px */
+    
+    padding-left: var(--space-s);
+    
+    /* UPDATED: Increase padding to clear the arrow (20px icon + 8px offset + 8px gap) */
+    padding-right: var(--s-9); /* 36px */
+    
+    /* Safety: Add dots (...) if text hits the padding limit */
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+    
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23777'%3e%3cpath d='M7 10l5 5 5-5z'/%3e%3c/svg%3e"); 
+    background-repeat: no-repeat; 
+    background-position: right var(--space-xs) center; 
+    background-size: var(--s-5); 
+}
+
+.xxs-select::before {
+    content: "arrow_down"; 
+    font-family: 'Google Symbols';
+    font-weight: normal;
+    font-size: var(--fs-200); /* 14px */
+    color: var(--on-surface-de-emphasis);
+    line-height: 1;
+}
+
+.xxs-input:focus, .xxs-select:focus { 
+    box-shadow: 0 0 0 2px var(--surface), 0 0 0 3px var(--primary);
+}
+
+.xxs-section-title { 
+    color: var(--on-surface-de-emphasis); 
+    width: 100%; 
+}
+
+/* --- SEGMENTED CONTROLS (M3 Style) --- */
+
+/* The Container */
+.xxs-btn-group { 
+    display: flex; 
+    width: 100%; 
+    gap: var(--s-1); /* 4px */
+    isolation: isolate; /* Create new stacking context */
+}
+
+/* The Individual Segment */
+.xxs-btn-group .xxs-btn { 
+    flex: 1; 
+    height: var(--s-9); /* 36px */
+    background: transparent; 
+    color: var(--on-secondary-container);
+    cursor: pointer; 
+    position: relative;
+    
+    /* Border Logic: Connect them */
+    border: var(--border-thin) solid transparent; /* UPDATED for focus consistency */
+    background: var(--surface-container-low);
+    margin-left: -1px; /* Overlap borders */
+    border-radius: var(--radius-xs); /* Square by default */
+    
+    /* Animation */
+    transition: background 0.2s, color 0.2s, z-index 0s, border-color 0.2s;
+    
+    /* Flex layout for the checkmark icon */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--s-0-5); /* 2px */
+    padding: 0 var(--space-xs); /* Safety padding for long text */
+}
+
+/* First Item: Round Left */
+.xxs-btn-group .xxs-btn:first-child { 
+    border-radius: var(--radius-full) 0 0 var(--radius-full); 
+    margin-left: 0; 
+}
+
+/* Last Item: Round Right */
+.xxs-btn-group .xxs-btn:last-child { 
+    border-radius: 0 var(--radius-full) var(--radius-full) 0; 
+}
+
+/* Hover State */
+.xxs-btn-group .xxs-btn:hover { 
+    background: var(--surface-container-high); 
+    z-index: 2; /* Bring border to front */
+}
+
+/* SELECTED STATE */
+.xxs-btn-group .xxs-btn.selected { 
+    background: var(--highlight); /* Light Blue Background */
+    color: var(--on-surface-primary);         /* Dark Blue Text */
+    border-color: var(--primary);
+    z-index: 3; /* Sit above unselected neighbors */
+    font-weight: 600;
+}
+
+/* SEGMENTED BUTTON FOCUS */
+.xxs-btn-group .xxs-btn:focus-visible {
+    outline: none;
+    border-color: var(--primary);
+    z-index: 4;
+}
+
+/* EXPRESSIVE MORPH BUTTONS */
+.xxs-btn { 
+    flex: 1; height: var(--s-9); /* 36px */
+    background-color: var(--surface-container-highest); 
+    color: var(--on-secondary-container);
+    cursor: pointer; 
+    
+    border: none;
+    
+    border-radius: 9999px; /* pill */
+    transition: border-radius 0.3s cubic-bezier(0.2, 0, 0, 1), background 0.2s, color 0.2s, border-color 0.2s; 
+}
+.xxs-btn:hover {
+    background: var(--surface-container-high);
+}
+.xxs-btn:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px var(--surface), 0 0 0 3px var(--primary);
+    background-color: var(--surface-container-high); /* Optional: Slight bg highlight */
+}
+.xxs-btn.selected { 
+    background: var(--highlight); 
+    color: var(--primary); 
+    border-color: var(--primary);
+}
+.xxs-btn:active { background-color: var(--surface-container-highest) }
+
+
+input[type="color"].xxs-color { 
+    padding: 0; 
+    height: var(--s-9); /* 36px */
+    width: var(--s-12); /* 48px */
+    cursor: pointer; 
+    background: none;
+    
+    /* NEW: Visual Polish */
+    border-radius: var(--radius-m); /* 12px */
+    overflow: hidden; /* Clips the native square color well */
+    border: 5px solid var(--outline); /* Subtle border definition */
+    transition: border-color 0.2s;
+}
+
+/* COLOR INPUT FOCUS */
+input[type="color"].xxs-color:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px var(--surface), 0 0 0 3px var(--primary);
+}
+
+/* Chrome/Webkit Specific Swatch Reset */
+input[type="color"].xxs-color::-webkit-color-swatch-wrapper {
+    padding: 0; 
+}
+input[type="color"].xxs-color::-webkit-color-swatch {
+    border: none;
+    border-radius: 3px;
+}
+
+/* --- 4. RESTORATION & POLISH --- */
+
+/* A. Cool Glass Badges */
+.viz-badges {
+    position: absolute; top: var(--space-s); left: var(--space-s); /* Moved to left for better vis */
+    display: flex; gap: var(--space-xs); pointer-events: none; z-index: 10;
+}
+.badge {
+    background: var(--surface-container-high);
+    background: rgb(from var(--surface-container-high) r g b / 66%);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(8px);
+    color: var(--on-surface-de-emphasis);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    
+    padding: 6px 10px; border-radius: 20px;
+    font-family: var(--ff-sans); font-size: 11px; line-height: 16px; font-weight: 500; letter-spacing: 0px;
+    display: flex; align-items: center; gap: 6px;
+    transform-origin: top left; animation: badgePop 0.4s cubic-bezier(0.2, 1.5, 0.5, 1) forwards;
+}
+@media (prefers-color-scheme: dark) {
+    .badge { background: rgba(30, 35, 45, 0.8); border-color: rgba(255,255,255,0.1); }
+}
+.badge .google-symbols { font-size: var(--fs-200); font-weight: bold; }
+
+/* NEW: SCIENTIFIC GLASS LABELS (Ghost Tags) */
+.viz-tag {
+    position: absolute; left: 0; top: 0;
+    padding: 5px 10px; border-radius: var(--radius-s);
+    white-space: pre; pointer-events: none;
+    color: var(--on-surface-default);
+    background: rgb(from var(--glass-surface) r g b / 40%);
+    backdrop-filter: blur(5px); 
+    -webkit-backdrop-filter: blur(5px);
+    border: none;
+    box-shadow: 0 0 4px 1px rgb(from var(--on-surface-default) r g b / 20%);
+    text-shadow: 0 0 5px rgb(from var(--surface) r g b / 90%);
+    will-change: transform; transition: opacity 0.1s;
+}
+@keyframes badgePop { from { opacity: 0; transform: scale(0.9) translateY(-5px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+
+/* B. Tech Status Bar */
+#app-status {
+    position: static;
+    font-family: inherit;
+    font-size: var(--fs-300);
+    font-weight: var(--fw-medium);
+    line-height: 1.5;
+    color: var(--on-surface-default);
+    
+    background: transparent; border: none; padding: 0;
+
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+
+    width: 100%;
+}
+@media (max-width: 450px) {
+    #app-status {
+        min-height: 1.5em; /* ANTI-BOUNCE: Reserve space even if empty */
+    }
+}
+
+/* C. Canvas Safety (Prevent Overlap/Squashing) */
+.viz-container {
+    min-height: 400px;
+    z-index: 0;
+    border-radius: var(--radius-l);
+    position: relative;
+    background: var(--surface);
+}
+@media (max-width: 500px) {
+    .viz-container {
+        min-height: var(--s-50);
+    }
+}
+
+.viz-container:after { 
+  content: '';
+  position: absolute;
+  inset: 0;
+  border: none;
+  border-radius: var(--radius-l);
+  pointer-events: none;
+}
+
+/* A11Y: Expand Touch Targets without changing Visual Size */
+
+/* 1. Buttons & Toggles */
+.xxs-btn, .xxs-switch, .xxs-slider-wrap {
+    position: relative; /* Anchor for pseudo-element */
+}
+
+/* Create invisible 44px+ hit zone centered on the 28px/24px element */
+.xxs-btn::after, 
+.xxs-switch::after {
+    content: "";
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    min-width: var(--s-11); /* 44px */
+    min-height: var(--s-11); /* 44px */
+    width: 100%; height: 100%; /* At least cover the element */
+    z-index: 1;
+    cursor: pointer;
+}
+
+/* 2. Sliders (Input Range) */
+/* The input needs to be taller to capture touches, but visually centered */
+input[type=range].xxs-slider {
+    height: var(--s-11); /* 44px Physical height for touch */
+
+    position: relative;
+    z-index: 2;
+}
+/* --- SHELL UPDATE: Clean Strip Dashboard --- */
+
+    .widget-dashboard {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--space-m);
+        
+        margin-left: auto;
+        width: auto;
+        
+        background: transparent;
+        border: none;
+        border-radius: var(--radius-s);
+        padding: var(--space-xs) 0;
+        height: 44px;
+    }
+
+    .dash-pill {
+        /* Layout */
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        
+        /* Spacing */
+        height: 100%;
+        
+        /* Divider Logic */
+        min-width: auto; /* Reset min-width from previous tabular style */
+    }
+
+    .dash-label {
+        color: var(--on-surface-de-emphasis);
+        font-size: var(--fs-100);
+        font-weight: var(--fw-medium);
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+        white-space: nowrap;
+        margin-bottom: 4px;
+    }
+
+    .dash-value {
+        color: var(--on-surface-default);
+        font-family: var(--ff-mono);
+        font-size: var(--fs-200);
+        line-height: 20px;
+        font-variant-numeric: tabular-nums;
+        white-space: nowrap;
+        overflow: visible;
+        text-overflow: clip;
+        max-width: none;
+    }
+
+    /* Mobile: Stack nicely */
+    @media (max-width: 500px) {
+        .widget-dashboard {
+            display: flex;
+            width: 100%;
+            margin-top: 8px;
+            height: auto;
+            max-height: 120px;
+            overflow-y: auto;
+            padding: 0;
+            flex-direction: column;
+            align-items: stretch;
+            background: transparent;
+            border: none;
+            gap: 0;
+        }
+        .widget-dashboard::-webkit-scrollbar { width: var(--s-1-5); }
+        .widget-dashboard::-webkit-scrollbar-track { background: transparent; }
+        .widget-dashboard::-webkit-scrollbar-thumb {
+            background-color: var(--outline);
+            border-radius: var(--radius-xs);
+        }
+        .dash-pill {
+            flex-direction: row;
+            justify-content: space-between;
+            align-items: center;
+            border-right: none;
+            border-bottom: var(--border-thin) solid var(--outline);
+            padding: 8px 0;
+            height: auto;
+        }
+        .dash-pill:last-child { border-bottom: none; }
+        .dash-label { margin-bottom: 0; }
+        .dash-value { font-size: 14px; }
+    }
+
+    /* CONTAINED MODE */
+    [data-style="contained"] .widget-container {
+        border: var(--border-thin) solid var(--outline);
+        border-radius: var(--radius-l);
+        margin: var(--space-m); /* Add margin so we can see the containment */
+        height: calc(100% - 2 * var(--space-m)); /* Adjust height */
+    }
+
+    /* Padding adjustments for contained mode */
+    [data-style="contained"] .widget-header,
+    [data-style="contained"] .control-grid {
+        padding-left: var(--space-m);
+        padding-right: var(--space-m);
+    }
+
+    [data-style="contained"] .viz-container {
+        border-radius: 0;
+    }
+
+    [data-style="contained"] .viz-container:after {
+        display: none;
+    }
+    /* --- WiO WIDGET FRAME DESIGN SPEC --- */
+
+    .widget-ui-part {
+        border: none;
+        border-radius: 0 0 var(--radius-l) var(--radius-l);
+    }
+
+    /* Restore top corners for Viz area specifically */
+    .viz-container.widget-ui-part {
+        border-radius: var(--radius-l);
+    }
+
+    /* --- MOBILE CONTROLS (D-PAD) --- */
+    /* --- MOBILE CONTROLS (SPLIT LAYOUT) --- */
+    #mobile-controls {
+    display: none; /* Hidden on desktops */
+    position: absolute; /* Anchors inside the black #viz container */
+    bottom: 20px;
+    left: 20px;
+    right: 20px;
+    z-index: 100;
+    justify-content: space-between;
+    
+    /* Lets you touch the canvas between the buttons */
+    pointer-events: none; 
+    }
+
+    #controls-left, #controls-right {
+    display: flex;
+    gap: 10px;
+    /* Re-enables touch for the actual buttons */
+    pointer-events: auto; 
+    }
+
+    /* Stack Forward/Reverse vertically */
+    #controls-left {
+    flex-direction: column; 
+    }
+
+    /* Put Left/Right side-by-side */
+    #controls-right {
+    flex-direction: row; 
+    align-items: flex-end; 
+    }
+
+    .dpad-btn {
+    width: 60px;
+    height: 60px;
+    border-radius: var(--radius-m);
+    background: rgba(150, 150, 150, 0.2); 
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    border: 2px solid var(--outline);
+    color: var(--on-surface-default);
+    font-size: 24px;
+    font-weight: bold;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    touch-action: none; 
+    }
+
+    .dpad-btn:active {
+    background: var(--primary);
+    color: var(--on-primary);
+    border-color: var(--primary);
+    }
+
+    @media (pointer: coarse) {
+    #mobile-controls {
+        display: flex;
+    }
+    }
