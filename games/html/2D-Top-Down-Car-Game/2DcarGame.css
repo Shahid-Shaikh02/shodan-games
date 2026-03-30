@@ -904,7 +904,10 @@ input[type=range].xxs-slider {
     #mobile-controls {
     display: none; /* Hidden on desktops */
     position: absolute; /* Anchors inside the black #viz container */
-    bottom: 20px;
+    
+    /* Pushed up to clear mobile menus and rounded screen edges */
+    bottom: max(40px, env(safe-area-inset-bottom)); 
+    
     left: 20px;
     right: 20px;
     z-index: 100;
@@ -964,8 +967,9 @@ input[type=range].xxs-slider {
 /* --- FULLSCREEN & FLOATING MENU OVERRIDES --- */
 
 /* Force the game to take over the whole screen */
-body {
+html, body {
     height: 100vh !important;
+    height: 100dvh !important; /* The magic fix: Dynamic Viewport Height */
     width: 100vw !important;
     overflow: hidden !important;
 }
