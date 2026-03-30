@@ -232,34 +232,39 @@ function setupSettingsMenu() {
     const controlsMenu = document.getElementById('controls-root');
     const vizContainer = document.getElementById('viz');
 
-    if (vizContainer && controlsMenu) {
-        // 1. Create the button dynamically so it definitely exists inside the canvas
+    // Make sure containers exist and we haven't already created the button
+    if (vizContainer && controlsMenu && !document.getElementById('settings-toggle')) {
+        
+        // 1. Create the button dynamically
         const settingsBtn = document.createElement('button');
         settingsBtn.id = 'settings-toggle';
         settingsBtn.textContent = '⚙️ Settings';
         
-        // Append it directly to the black canvas so it's always relative to it
+        // Append it directly to the black canvas
         vizContainer.appendChild(settingsBtn);
-
-        // 2. Move the controls menu into the canvas area too, so it floats properly
         vizContainer.appendChild(controlsMenu);
 
-        // 3. Fix the Click Logic
-        settingsBtn.addEventListener('click', (e) => {
-            e.preventDefault(); // Stop the canvas from eating the click
+        // 2. Fix the Click & Touch Logic for Mobile
+        const toggleMenu = (e) => {
+            e.preventDefault(); 
             e.stopPropagation();
             controlsMenu.classList.toggle('menu-open');
-        });
+        };
 
-        // Optional: Auto-close the menu if the user touches the game screen to drive
+        // Listen for both clicks (desktop) and touches (mobile)
+        settingsBtn.addEventListener('click', toggleMenu);
+        settingsBtn.addEventListener('touchstart', toggleMenu, { passive: false });
+
+        // 3. Auto-close when touching the game canvas to drive
         vizContainer.addEventListener('touchstart', (e) => {
-            // Only close if they didn't click the settings button itself
-            if (e.target.id !== 'settings-toggle') {
+            // ONLY close if they didn't touch the settings button AND didn't touch the sliders
+            if (e.target.id !== 'settings-toggle' && !controlsMenu.contains(e.target)) {
                 controlsMenu.classList.remove('menu-open');
             }
         }, { passive: true });
     }
 }
 
-// Initialize the menu (slight delay ensures Widget Shell has built the UI)
+// Run immediately, and retry once after 500ms to ensure the engine is ready
+setupSettingsMenu();
 setTimeout(setupSettingsMenu, 500);
