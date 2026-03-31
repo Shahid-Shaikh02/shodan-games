@@ -10,8 +10,9 @@ const isMobile = window.matchMedia("(pointer: coarse)").matches;
 // Base settings for everyone
 const appParams = {
     grip: { value: 0.8, min: 0.05, max: 1.0, step: 0.05, label: "Tire Grip" },
-    power: { value: 1200, min: 500, max: 2500, step: 100, label: "Engine Power" },
-    sfx: { value: true, label: "Car SFX" } // NEW: SFX Toggle Switch
+    // UPGRADED ENGINE: Default 2200, Max 3500 to easily hit 250+ km/h
+    power: { value: 2200, min: 500, max: 3500, step: 100, label: "Engine Power" }, 
+    sfx: { value: true, label: "Engine SFX" }
 };
 
 // ONLY add these sliders if the user is on a mobile device
@@ -105,16 +106,17 @@ function setupMobileControls() {
 // Initialize the mobile controls
 setupMobileControls();
 
-// --- 3.8 ENGINE AUDIO MANAGER (UNITY STYLE) ---
+// --- 3.8 ENGINE AUDIO MANAGER (VIRTUAL GEARBOX) ---
 const AudioContext = window.AudioContext || window.webkitAudioContext;
 const audioCtx = new AudioContext();
 
-let idleGain, speedGain, speedSource;
+let idleGain, speedGain1, speedGain2, speedGain3;
+let idleSource, speedSource1, speedSource2, speedSource3;
 let audioStarted = false;
 let contextResumed = false; 
 
-// Track current smoothed values to avoid jarring changes
-const audioState = { idleVol: 0, speedVol: 0, speedPitch: 0.5 };
+// Track volumes for our 4 separate layers
+const audioState = { idleVol: 0, s1Vol: 0, s2Vol: 0, s3Vol: 0, speedPitch: 0.5 };
 let idleBuffer = null;
 let speedBuffer = null;
 
@@ -129,7 +131,7 @@ async function loadAudio(url) {
     }
 }
 
-// Load your two main files
+// Load files and start them if the user already clicked
 Promise.all([
     loadAudio('resources/car-idealing.wav'),
     loadAudio('resources/car-speeding.wav') 
@@ -142,30 +144,28 @@ Promise.all([
 function initAudioNodes() {
     if (!idleBuffer || !speedBuffer || audioStarted) return;
 
-    // 1. Setup Idle Audio (Infinite Loop)
-    idleGain = audioCtx.createGain(); 
-    idleGain.gain.value = 0; 
-    idleGain.connect(audioCtx.destination);
-    
-    const idleSource = audioCtx.createBufferSource(); 
-    idleSource.buffer = idleBuffer; 
-    idleSource.loop = true;
-    idleSource.connect(idleGain); 
-    idleSource.start();
+    // 1. Setup Idle Audio
+    idleGain = audioCtx.createGain(); idleGain.gain.value = 0; idleGain.connect(audioCtx.destination);
+    idleSource = audioCtx.createBufferSource(); idleSource.buffer = idleBuffer; idleSource.loop = true;
+    idleSource.connect(idleGain); idleSource.start();
 
-    // 2. Setup Speeding Audio (Infinite Loop, starts at 01:00 to skip the startup noise)
-    speedGain = audioCtx.createGain(); 
-    speedGain.gain.value = 0; 
-    speedGain.connect(audioCtx.destination);
-    
-    speedSource = audioCtx.createBufferSource(); 
-    speedSource.buffer = speedBuffer; 
-    speedSource.loop = true; 
-    // We start the loop at 1 second so it skips the initial "rev" sound
-    speedSource.loopStart = 1; 
-    speedSource.loopEnd = speedBuffer.duration - 0.05; // Trim the very end to prevent a pop
-    speedSource.connect(speedGain); 
-    speedSource.start(0, 1); 
+    // 2. Setup Low Gear (01:00 to 04:00)
+    speedGain1 = audioCtx.createGain(); speedGain1.gain.value = 0; speedGain1.connect(audioCtx.destination);
+    speedSource1 = audioCtx.createBufferSource(); speedSource1.buffer = speedBuffer; 
+    speedSource1.loop = true; speedSource1.loopStart = 1; speedSource1.loopEnd = 4;
+    speedSource1.connect(speedGain1); speedSource1.start(0, 1); 
+
+    // 3. Setup Med Gear (04:00 to 10:00)
+    speedGain2 = audioCtx.createGain(); speedGain2.gain.value = 0; speedGain2.connect(audioCtx.destination);
+    speedSource2 = audioCtx.createBufferSource(); speedSource2.buffer = speedBuffer; 
+    speedSource2.loop = true; speedSource2.loopStart = 4; speedSource2.loopEnd = 10;
+    speedSource2.connect(speedGain2); speedSource2.start(0, 4); 
+
+    // 4. Setup High Gear (10:00 to 22:00)
+    speedGain3 = audioCtx.createGain(); speedGain3.gain.value = 0; speedGain3.connect(audioCtx.destination);
+    speedSource3 = audioCtx.createBufferSource(); speedSource3.buffer = speedBuffer; 
+    speedSource3.loop = true; speedSource3.loopStart = 10; speedSource3.loopEnd = Math.min(22, speedBuffer.duration - 0.05);
+    speedSource3.connect(speedGain3); speedSource3.start(0, 10); 
 
     audioStarted = true;
 }
@@ -308,109 +308,194 @@ WH.initCanvas('viz', (ctx) => {
         }
 
         // Labels for Vectors
-        if (vLen > 20) {
+        // if (vLen > 20) {
+        //     ctx.save();
+        //     ctx.font = '12px sans-serif';
+        //     ctx.fillStyle = WH.getColor('--on-surface-default');
+        //     ctx.fillText("Forward (Facing)", state.x + fx * fLen + 10, state.y + fy * fLen);
+        //     ctx.restore();
+        // }
+
+        // --- Legend Overlay (Shifted down to clear Home Button) ---
+        ctx.drawTag("Blue: Forward Facing", 20, 80, '--chart-1');
+        ctx.drawTag("Red: Actual Velocity", 20, 115, '--chart-4');
+        ctx.drawTag("Green: Sideways Slip", 20, 150, '--chart-2');
+
+        // --- NEW: TOP-RIGHT HUD (Inside Canvas) ---
+        // FIX: Use Total Velocity instead of Forward Vector to prevent audio/speed glitching during spins
+        const totalVelocity = Math.sqrt(state.vx**2 + state.vy**2);
+        const currentSpeedKmH = Math.round(totalVelocity * 0.1);
+        
+        ctx.save();
+        ctx.textAlign = 'right';
+        ctx.textBaseline = 'top';
+        ctx.font = 'bold 16px monospace';
+        
+        ctx.fillStyle = window.WH.getColor('--on-surface-default');
+        ctx.fillText(`SPEED: ${currentSpeedKmH} km/h`, width - 20, 20);
+        
+        ctx.fillStyle = window.WH.getColor('--on-surface-de-emphasis');
+        ctx.fillText(`SLIP: ${Math.round(sideSpeed)} px/s`, width - 20, 45);
+        
+        ctx.fillStyle = state.grip > 0.5 ? window.WH.getColor('--success') : window.WH.getColor('--warning');
+        ctx.fillText(`GRIP: ${state.grip > 0.5 ? "Sticky" : "Drifty"}`, width - 20, 70);
+        ctx.restore();
+
+        // --- NEW: 3-SECOND INTRO SPLASH ---
+        if (time < 3) {
             ctx.save();
-            ctx.font = '12px sans-serif';
-            ctx.fillStyle = WH.getColor('--on-surface-default');
-            ctx.fillText("Forward (Facing)", state.x + fx * fLen + 10, state.y + fy * fLen);
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            
+            // Fades out smoothly between second 2 and 3
+            ctx.globalAlpha = time > 2 ? 3 - time : 1.0; 
+
+            // Title
+            ctx.fillStyle = window.WH.getColor('--on-surface-default');
+            ctx.font = 'bold 36px sans-serif';
+            ctx.fillText("Car Vector Physics", width / 2, height / 2 - 20);
+            
+            // Subtitle / Developer
+            ctx.font = 'bold 18px monospace';
+            ctx.fillStyle = window.WH.getColor('--primary');
+            ctx.fillText("@shodan_dev", width / 2, height / 2 + 15);
+            
+            // Instructions
+            ctx.font = '14px sans-serif';
+            ctx.fillStyle = window.WH.getColor('--on-surface-de-emphasis');
+            ctx.fillText("Use WASD, Arrow Keys, or D-Pad to Drive", width / 2, height / 2 + 50);
+
             ctx.restore();
         }
 
-        // Legend Overlay
-        ctx.drawTag("Blue: Forward Facing", 20, 30, '--chart-1');
-        ctx.drawTag("Red: Actual Velocity", 20, 65, '--chart-4');
-        ctx.drawTag("Green: Sideways Slip", 20, 100, '--chart-2');
-
-        // Instructions
-        if (time < 5) {
-            ui.setStatus("Use WASD or Arrow Keys to Drive");
-        } else {
-            ui.setStatus("Use WASD or Arrow Keys to Drive");
-        }
-
-        // HUD Stats
-        const currentSpeedKmH = Math.round(Math.abs(forwardSpeed) * 0.1);
-        ui.setHUD([
-            { label: "Speed", value: `${currentSpeedKmH} km/h` },
-            { label: "Slip", value: `${Math.round(sideSpeed)} px/s` },
-            { label: "Grip Status", value: state.grip > 0.5 ? "Sticky" : "Drifty" }
-        ]);
-
-        // --- 4. DYNAMIC ENGINE AUDIO (UNITY MULTIPLIER LOGIC) ---
+        // --- 4. DYNAMIC ENGINE AUDIO (VIRTUAL GEARBOX) ---
         if (audioStarted) {
             let targetIdle = 0;
-            let targetSpeedVol = 0;
-            let targetPitch = 0.5; // Base pitch
+            let targetS1 = 0;
+            let targetS2 = 0;
+            let targetS3 = 0;
+            let targetPitch = 0.5;
 
             const isSfxOn = state.sfx !== false;
-            const maxSpeed = 150; // Assume 150 km/h is roughly the top speed
+            const maxSpeed = 250; // NEW TOP SPEED FOR AUDIO MATH
+            const gasPedal = Math.abs(moveInput); // 1 if pressing W or S
 
-            if (currentSpeedKmH === 0) {
+            if (currentSpeedKmH === 0 && gasPedal === 0) {
                 targetIdle = 0.6; // Hear the idle clearly
-                targetSpeedVol = 0; // Speeding audio is muted
-                targetPitch = 0.5; // Lowest pitch
+                targetPitch = 0.5; 
             } else {
-                // Fade out idle quickly as you start moving
+                // Fade out idle smoothly
                 targetIdle = Math.max(0, 0.6 - (currentSpeedKmH * 0.05));
 
-                // 1. Volume Multiplier (Gets louder as you go faster, caps at 1.0)
-                // Speeds 1-30 are quiet (around 0.3 to 0.5), higher speeds max out the volume
-                targetSpeedVol = Math.min(1.0, 0.3 + (currentSpeedKmH / maxSpeed) * 0.8);
+                let baseVol = gasPedal > 0 ? 0.8 : 0.3;
 
-                // 2. Pitch Multiplier (Engine revs higher as speed increases)
-                // Pitch goes from 0.8x speed up to 2.2x speed
-                targetPitch = 0.8 + (currentSpeedKmH / maxSpeed) * 1.4;
+                // STRETCHED GEARBOX: Fits the new 250 km/h top speed
+                if (currentSpeedKmH <= 70) {
+                    targetS1 = baseVol;      // Low Gear (1s to 4s) stays until 70 km/h
+                } else if (currentSpeedKmH <= 160) {
+                    targetS2 = baseVol;      // Med Gear (4s to 10s) pulls from 70 to 160 km/h
+                } else {
+                    targetS3 = baseVol;      // High Gear (10s to 22s) screams from 160 to 250+ km/h
+                }
+
+                // Pitch: Scales all the way up to 250 km/h
+                let basePitch = gasPedal > 0 ? 0.9 : 0.6;
+                targetPitch = basePitch + (currentSpeedKmH / maxSpeed) * 1.2; 
             }
 
             // MUTE EVERYTHING if SFX toggle is turned off
             if (!isSfxOn) {
-                targetIdle = targetSpeedVol = 0;
+                targetIdle = targetS1 = targetS2 = targetS3 = 0;
             }
 
-            // Smoothly interpolate the values so the engine doesn't sound jerky
+            // Smoothly interpolate to prevent popping on transitions
             audioState.idleVol += (targetIdle - audioState.idleVol) * 0.1;
-            audioState.speedVol += (targetSpeedVol - audioState.speedVol) * 0.1;
+            audioState.s1Vol += (targetS1 - audioState.s1Vol) * 0.1;
+            audioState.s2Vol += (targetS2 - audioState.s2Vol) * 0.1;
+            audioState.s3Vol += (targetS3 - audioState.s3Vol) * 0.1;
             audioState.speedPitch += (targetPitch - audioState.speedPitch) * 0.1;
 
-            // Apply the smoothed values instantly
+            // Apply the volumes to our 4 audio tracks
             if (idleGain) idleGain.gain.value = audioState.idleVol;
-            if (speedGain) speedGain.gain.value = audioState.speedVol;
-            if (speedSource) speedSource.playbackRate.value = audioState.speedPitch;
+            if (speedGain1) speedGain1.gain.value = audioState.s1Vol;
+            if (speedGain2) speedGain2.gain.value = audioState.s2Vol;
+            if (speedGain3) speedGain3.gain.value = audioState.s3Vol;
+
+            // Apply pitch shift to all gears
+            if (speedSource1) speedSource1.playbackRate.value = audioState.speedPitch;
+            if (speedSource2) speedSource2.playbackRate.value = audioState.speedPitch;
+            if (speedSource3) speedSource3.playbackRate.value = audioState.speedPitch;
         }
     };
 });
 
-// --- Menu Toggle Logic (Dynamic Injection) ---
-function setupSettingsMenu() {
+// --- Overlay UI Logic (Dynamic Injection) ---
+function setupOverlayUI() {
     const controlsMenu = document.getElementById('controls-root');
     const vizContainer = document.getElementById('viz');
 
-    // Make sure containers exist and we haven't already created the button
     if (vizContainer && controlsMenu && !document.getElementById('settings-toggle')) {
         
-        // 1. Create the button dynamically
+        // 1. Home Button (Links to your GitHub Pages Root)
+        const homeBtn = document.createElement('a');
+        homeBtn.id = 'home-btn';
+        homeBtn.className = 'overlay-btn';
+        homeBtn.textContent = '🏠 Home';
+        homeBtn.href = 'https://shahid-shaikh02.github.io/shodan-games/'; 
+        vizContainer.appendChild(homeBtn);
+
+        // 2. Settings Button
         const settingsBtn = document.createElement('button');
         settingsBtn.id = 'settings-toggle';
+        settingsBtn.className = 'overlay-btn';
         settingsBtn.textContent = '⚙️ Settings';
-        
-        // Append it directly to the black canvas
         vizContainer.appendChild(settingsBtn);
         vizContainer.appendChild(controlsMenu);
 
-        // 2. Fix the Click & Touch Logic for Mobile
+        // 3. Credits Button
+        const creditBtn = document.createElement('button');
+        creditBtn.id = 'credit-btn';
+        creditBtn.className = 'overlay-btn';
+        creditBtn.textContent = '✨ Credits';
+        vizContainer.appendChild(creditBtn);
+
+        // 4. Credits Popup (Toast)
+        const toast = document.createElement('div');
+        toast.id = 'credit-toast';
+        toast.innerHTML = `
+            <h2 style="margin:0; font-family:sans-serif;">Car Vector Physics</h2>
+            <p style="margin:0; font-family:sans-serif; color:#aaa;">Created & Developed by</p>
+            <h3 style="margin:0; font-family:monospace; color:var(--primary);">@shodan_dev</h3>
+            
+            <div style="display:flex; gap:10px; justify-content:center; margin-top:12px;">
+                <a href="https://www.youtube.com/@shodan_dev" target="_blank" class="xxs-btn" style="text-decoration:none; font-size:13px; height:32px; flex:none; padding:0 15px;">▶ YouTube</a>
+                <a href="https://github.com/Shahid-Shaikh02/" target="_blank" class="xxs-btn" style="text-decoration:none; font-size:13px; height:32px; flex:none; padding:0 15px;">🐙 GitHub</a>
+            </div>
+            
+            <button id="close-credit" class="xxs-btn" style="margin-top:15px; background:var(--surface-container-highest); border:1px solid var(--outline);">Close</button>
+        `;
+        vizContainer.appendChild(toast);
+
+        // --- Interaction Logic ---
         const toggleMenu = (e) => {
-            e.preventDefault(); 
-            e.stopPropagation();
+            e.preventDefault(); e.stopPropagation();
             controlsMenu.classList.toggle('menu-open');
         };
 
-        // Listen for both clicks (desktop) and touches (mobile)
         settingsBtn.addEventListener('click', toggleMenu);
         settingsBtn.addEventListener('touchstart', toggleMenu, { passive: false });
 
-        // 3. Auto-close when touching the game canvas to drive
+        creditBtn.addEventListener('click', (e) => {
+            e.preventDefault(); e.stopPropagation();
+            toast.classList.add('show');
+        });
+
+        document.getElementById('close-credit').addEventListener('click', () => {
+            toast.classList.remove('show');
+        });
+
+        // Auto-close menus when touching the game canvas to drive
         vizContainer.addEventListener('touchstart', (e) => {
-            // ONLY close if they didn't touch the settings button AND didn't touch the sliders
             if (e.target.id !== 'settings-toggle' && !controlsMenu.contains(e.target)) {
                 controlsMenu.classList.remove('menu-open');
             }
@@ -418,6 +503,6 @@ function setupSettingsMenu() {
     }
 }
 
-// Run immediately, and retry once after 500ms to ensure the engine is ready
-setupSettingsMenu();
-setTimeout(setupSettingsMenu, 500);
+// Run immediately, and retry once after 500ms
+setupOverlayUI();
+setTimeout(setupOverlayUI, 500);
