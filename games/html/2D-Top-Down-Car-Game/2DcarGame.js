@@ -257,9 +257,29 @@ WH.initCanvas('viz', (ctx) => {
         state.vx -= rx * sideSpeed * gripEffect * dt;
         state.vy -= ry * sideSpeed * gripEffect * dt;
 
-        // General Drag (Air resistance / Rolling resistance)
-        state.vx *= 0.985;
-        state.vy *= 0.985;
+        // --- THE PERMANENT SPEED FIX ---
+        
+        // 1. Frame-Rate Independent Drag
+        // Math.pow(0.40, dt) ensures the car exactly matches the old 60fps friction 
+        // no matter if the screen is 30Hz, 60Hz, or 144Hz.
+        const drag = Math.pow(0.40, dt); 
+        state.vx *= drag;
+        state.vy *= drag;
+
+        // 2. Absolute Speed Governors (Electronic Speed Limiter)
+        let maxSpeedKmh = 350; // Default for Sports
+        if (state.currentCarType === 'muscle') maxSpeedKmh = 250;
+        if (state.currentCarType === 'sedan') maxSpeedKmh = 200;
+        
+        const maxSpeedPx = maxSpeedKmh * 10; // Convert km/h back to physics pixels
+        const currentSpeedPx = Math.sqrt(state.vx**2 + state.vy**2);
+        
+        // If the car tries to go faster than its class limit, strictly clamp the velocity
+        if (currentSpeedPx > maxSpeedPx) {
+            const clampRatio = maxSpeedPx / currentSpeedPx;
+            state.vx *= clampRatio;
+            state.vy *= clampRatio;
+        }
 
         // Update Position
         state.x += state.vx * dt;
