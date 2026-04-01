@@ -307,15 +307,23 @@ WH.initCanvas('viz', (ctx) => {
         if (state.currentCarType === 'sports' && sportsCarImg.complete) {
             ctx.rotate(Math.PI / 2);
             const imgRatio = sportsCarImg.height / (sportsCarImg.width || 1);
-            const imgW = carSize;
-            const imgH = carSize * imgRatio; 
+            
+            // CUSTOM SCALE: Make the Sports Car 50% bigger to fix PNG padding
+            const visualScale = 1.5; 
+            
+            const imgW = carSize * visualScale;
+            const imgH = (carSize * visualScale) * imgRatio; 
             ctx.drawImage(sportsCarImg, -imgW/2, -imgH/2, imgW, imgH);
             
         } else if (state.currentCarType === 'sedan' && sedanCarImg.complete) {
             ctx.rotate(Math.PI / 2);
             const imgRatio = sedanCarImg.height / (sedanCarImg.width || 1);
-            const imgW = carSize;
-            const imgH = carSize * imgRatio; 
+            
+            // Standard Scale for Sedan
+            const visualScale = 1.0; 
+            
+            const imgW = carSize * visualScale;
+            const imgH = (carSize * visualScale) * imgRatio; 
             ctx.drawImage(sedanCarImg, -imgW/2, -imgH/2, imgW, imgH);
             
         } else {
