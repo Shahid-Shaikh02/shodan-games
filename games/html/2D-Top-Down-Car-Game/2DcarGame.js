@@ -29,6 +29,16 @@ const { state, ui } = WH.createApp({
     params: appParams
 });
 
+// SAFE STATE: Set default car type
+state.currentCarType = 'sports'; 
+
+// --- LOAD CAR IMAGES ---
+const sportsCarImg = new Image();
+sportsCarImg.src = 'cars-selector/sports-car.png';
+
+const sedanCarImg = new Image();
+sedanCarImg.src = 'cars-selector/sedan-car.png';
+
 // --- Instantly update buttons when sliders move ---
 if (isMobile) {
     // Set initial CSS variables
@@ -255,8 +265,9 @@ WH.initCanvas('viz', (ctx) => {
 
         // --- 2. DRAWING ---
 
-        const carSize = Math.min(width, height) * 0.08;
-        const vectorScale = 0.5; // Scale for visual arrows
+        // ENLARGED CAR SIZE: Changed from 0.08 to 0.13
+        const carSize = Math.min(width, height) * 0.13; 
+        const vectorScale = 0.5; 
 
         // Draw Trails
         ctx.strokeStyle = WH.transparent('--on-surface-default', 0.2);
@@ -277,13 +288,28 @@ WH.initCanvas('viz', (ctx) => {
         ctx.shadowBlur = 15;
         ctx.shadowColor = WH.transparent('--primary', 0.4);
 
-        // Simple Rectangle Car
-        ctx.fillStyle = WH.getColor('--primary');
-        ctx.fillRect(-carSize/2, -carSize/4, carSize, carSize/2);
-        
-        // Windshield (Identify Front)
-        ctx.fillStyle = WH.getColor('--surface');
-        ctx.fillRect(carSize/4, -carSize/5, carSize/6, carSize/2.5);
+        if (state.currentCarType === 'sports' && sportsCarImg.complete) {
+            ctx.rotate(Math.PI / 2);
+            const imgRatio = sportsCarImg.height / (sportsCarImg.width || 1);
+            const imgW = carSize;
+            const imgH = carSize * imgRatio; 
+            ctx.drawImage(sportsCarImg, -imgW/2, -imgH/2, imgW, imgH);
+            
+        } else if (state.currentCarType === 'sedan' && sedanCarImg.complete) {
+            ctx.rotate(Math.PI / 2);
+            const imgRatio = sedanCarImg.height / (sedanCarImg.width || 1);
+            const imgW = carSize;
+            const imgH = carSize * imgRatio; 
+            ctx.drawImage(sedanCarImg, -imgW/2, -imgH/2, imgW, imgH);
+            
+        } else {
+            // MUSCLE CAR (The flat code logic)
+            ctx.fillStyle = WH.getColor('--primary');
+            ctx.fillRect(-carSize/2, -carSize/4, carSize, carSize/2);
+            
+            ctx.fillStyle = WH.getColor('--surface'); // Windshield
+            ctx.fillRect(carSize/4, -carSize/5, carSize/6, carSize/2.5);
+        }
         
         ctx.restore();
 
@@ -436,73 +462,100 @@ function setupOverlayUI() {
 
     if (vizContainer && controlsMenu && !document.getElementById('settings-toggle')) {
         
-        // 1. Home Button (Links to your GitHub Pages Root)
+        // --- NEW: TOP-CENTER MENU WRAPPER ---
+        const topMenu = document.createElement('div');
+        topMenu.id = 'top-menu-container';
+        vizContainer.appendChild(topMenu);
+
+        // 1. Home Button (Inside top menu)
         const homeBtn = document.createElement('a');
         homeBtn.id = 'home-btn';
         homeBtn.className = 'overlay-btn';
         homeBtn.textContent = '🏠 Home';
         homeBtn.href = 'https://shahid-shaikh02.github.io/shodan-games/'; 
-        vizContainer.appendChild(homeBtn);
+        topMenu.appendChild(homeBtn);
 
-        // 2. Settings Button
+        // 2. Settings Button (Inside top menu)
         const settingsBtn = document.createElement('button');
         settingsBtn.id = 'settings-toggle';
         settingsBtn.className = 'overlay-btn';
         settingsBtn.textContent = '⚙️ Settings';
-        vizContainer.appendChild(settingsBtn);
+        topMenu.appendChild(settingsBtn);
         vizContainer.appendChild(controlsMenu);
 
-        // 3. Credits Button
+        // 3. Credits Button (Now sits cleanly in the top-left)
         const creditBtn = document.createElement('button');
         creditBtn.id = 'credit-btn';
         creditBtn.className = 'overlay-btn';
         creditBtn.textContent = '✨ Credits';
         vizContainer.appendChild(creditBtn);
 
-        // 4. Credits Popup (Toast)
+        // 4. Credits Popup
         const toast = document.createElement('div');
         toast.id = 'credit-toast';
         toast.innerHTML = `
             <h2 style="margin:0; font-family:sans-serif;">Car Vector Physics</h2>
             <p style="margin:0; font-family:sans-serif; color:#aaa;">Created & Developed by</p>
             <h3 style="margin:0; font-family:monospace; color:var(--primary);">@shodan_dev</h3>
-            
             <div style="display:flex; gap:10px; justify-content:center; margin-top:12px;">
                 <a href="https://www.youtube.com/@shodan_dev" target="_blank" class="xxs-btn" style="text-decoration:none; font-size:13px; height:32px; flex:none; padding:0 15px;">▶ YouTube</a>
                 <a href="https://github.com/Shahid-Shaikh02/" target="_blank" class="xxs-btn" style="text-decoration:none; font-size:13px; height:32px; flex:none; padding:0 15px;">🐙 GitHub</a>
             </div>
-            
             <button id="close-credit" class="xxs-btn" style="margin-top:15px; background:var(--surface-container-highest); border:1px solid var(--outline);">Close</button>
         `;
         vizContainer.appendChild(toast);
 
-        // --- Interaction Logic ---
-        const toggleMenu = (e) => {
-            e.preventDefault(); e.stopPropagation();
-            controlsMenu.classList.toggle('menu-open');
-        };
+        // 5. Garage Button
+        const garageBtn = document.createElement('button');
+        garageBtn.id = 'garage-btn';
+        garageBtn.className = 'overlay-btn';
+        garageBtn.textContent = '🚘 Garage';
+        vizContainer.appendChild(garageBtn);
 
+        // 6. Garage Modal (3 Cars)
+        const garageModal = document.createElement('div');
+        garageModal.id = 'garage-modal';
+        garageModal.innerHTML = `
+            <div class="modal-header">SPAWN VEHICLE</div>
+            <div class="car-options">
+                <button id="switch-sports" class="modal-btn active">Sports Car</button>
+                <button id="switch-muscle" class="modal-btn">Muscle Car</button>
+                <button id="switch-sedan" class="modal-btn">Sedan Car</button>
+            </div>
+            <button id="close-garage" class="modal-close-btn">Close</button>
+        `;
+        vizContainer.appendChild(garageModal);
+
+        // --- Interaction Logic ---
+        const toggleMenu = (e) => { e.preventDefault(); e.stopPropagation(); controlsMenu.classList.toggle('menu-open'); };
         settingsBtn.addEventListener('click', toggleMenu);
         settingsBtn.addEventListener('touchstart', toggleMenu, { passive: false });
 
-        creditBtn.addEventListener('click', (e) => {
-            e.preventDefault(); e.stopPropagation();
-            toast.classList.add('show');
-        });
+        creditBtn.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); toast.classList.add('show'); });
+        document.getElementById('close-credit').addEventListener('click', () => toast.classList.remove('show') );
 
-        document.getElementById('close-credit').addEventListener('click', () => {
-            toast.classList.remove('show');
-        });
+        garageBtn.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); garageModal.classList.add('show'); });
+        document.getElementById('close-garage').addEventListener('click', () => garageModal.classList.remove('show') );
 
-        // Auto-close menus when touching the game canvas to drive
+        // --- 3-Car Switcher Logic ---
+        const btnSports = document.getElementById('switch-sports');
+        const btnMuscle = document.getElementById('switch-muscle');
+        const btnSedan = document.getElementById('switch-sedan');
+        
+        const updateGarageUI = (activeBtn, type) => {
+            state.currentCarType = type;
+            [btnSports, btnMuscle, btnSedan].forEach(btn => btn.classList.remove('active'));
+            activeBtn.classList.add('active');
+        };
+
+        btnSports.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); updateGarageUI(btnSports, 'sports'); });
+        btnMuscle.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); updateGarageUI(btnMuscle, 'muscle'); });
+        btnSedan.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); updateGarageUI(btnSedan, 'sedan'); });
+
         vizContainer.addEventListener('touchstart', (e) => {
-            if (e.target.id !== 'settings-toggle' && !controlsMenu.contains(e.target)) {
-                controlsMenu.classList.remove('menu-open');
-            }
+            if (e.target.id !== 'settings-toggle' && !controlsMenu.contains(e.target)) controlsMenu.classList.remove('menu-open');
         }, { passive: true });
     }
 }
-
-// Run immediately, and retry once after 500ms
 setupOverlayUI();
 setTimeout(setupOverlayUI, 500);

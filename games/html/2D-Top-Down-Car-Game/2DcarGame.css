@@ -1022,9 +1022,26 @@ html, body {
 }
 .overlay-btn:hover { background: rgba(60, 65, 75, 0.9); }
 
-#home-btn { top: 15px; left: 15px; }
-#settings-toggle { top: 15px; left: 50%; transform: translateX(-50%); }
-#credit-btn { top: 185px; left: 15px; padding: 6px 12px; font-size: 11px; } /* Pushed down to 185px */
+/* --- op-Middle Menu Wrapper --- */
+#top-menu-container {
+    position: absolute;
+    top: 15px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 15px;
+    z-index: 1000;
+    pointer-events: none; /* Let clicks pass through empty space */
+}
+
+/* Reset the buttons inside the flex container */
+#home-btn, #settings-toggle {
+    position: static;
+    transform: none;
+}
+
+/* Put Credits cleanly in the top-left corner */
+#credit-btn { top: 15px; left: 15px; padding: 6px 12px; font-size: 11px; }
 
 /* --- CREDIT TOAST MODAL --- */
 #credit-toast {
@@ -1065,3 +1082,74 @@ html, body {
     flex-direction: column !important;
 }
 .control-grid.menu-open { display: flex !important; }
+
+/* Position the new Garage button below the stats HUD */
+#garage-btn { 
+    top: 100px; 
+    right: 20px; 
+}
+
+/* --- GARAGE MODAL (Glassmorphism UI) --- */
+#garage-modal {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(15, 20, 25, 0.65); /* Faded transparent box */
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 2px solid #00E5FF; /* Cyan border from the screenshot */
+    padding: 25px;
+    border-radius: 12px;
+    z-index: 2000;
+    display: none; /* Hidden by default */
+    flex-direction: column;
+    gap: 15px;
+    box-shadow: 0 15px 40px rgba(0,0,0,0.8);
+    min-width: 250px;
+}
+#garage-modal.show { display: flex; }
+
+.modal-header {
+    color: #00E5FF;
+    font-family: var(--ff-sans);
+    font-size: 14px;
+    font-weight: bold;
+    text-align: center;
+    letter-spacing: 2px;
+    border-bottom: 1px solid rgba(0, 229, 255, 0.3);
+    padding-bottom: 10px;
+}
+
+.car-options {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.modal-btn {
+    background: rgba(0, 0, 0, 0.5);
+    border: 1px solid #00E5FF;
+    color: white;
+    padding: 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-family: monospace;
+    font-size: 14px;
+    transition: all 0.2s;
+}
+.modal-btn:hover, .modal-btn.active {
+    background: rgba(0, 229, 255, 0.25);
+    box-shadow: inset 0 0 10px rgba(0, 229, 255, 0.4);
+}
+
+.modal-close-btn {
+    background: transparent;
+    border: 1px solid var(--outline);
+    color: var(--on-surface-de-emphasis);
+    padding: 8px;
+    border-radius: 6px;
+    cursor: pointer;
+    margin-top: 10px;
+    transition: background 0.2s;
+}
+.modal-close-btn:hover { background: rgba(255, 255, 255, 0.1); }
