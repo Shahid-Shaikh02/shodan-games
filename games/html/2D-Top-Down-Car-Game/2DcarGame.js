@@ -10,8 +10,8 @@ const isMobile = window.matchMedia("(pointer: coarse)").matches;
 // Base settings for everyone
 const appParams = {
     grip: { value: 0.8, min: 0.05, max: 1.0, step: 0.05, label: "Tire Grip" },
-    // UPGRADED ENGINE: Default 2200, Max 3500 to easily hit 250+ km/h
-    power: { value: 2200, min: 500, max: 3500, step: 100, label: "Engine Power" }, 
+    // REVERTED back to normal 1200 baseline
+    power: { value: 1200, min: 500, max: 4000, step: 100, label: "Engine Power" }, 
     sfx: { value: true, label: "Engine SFX" }
 };
 
@@ -213,6 +213,25 @@ WH.initCanvas('viz', (ctx) => {
         const moveInput = (state.keys.w || state.keys.ArrowUp ? 1 : 0) - (state.keys.s || state.keys.ArrowDown ? 1 : 0);
         const steerInput = (state.keys.d || state.keys.ArrowRight ? 1 : 0) - (state.keys.a || state.keys.ArrowLeft ? 1 : 0);
 
+        // --- NEW: VEHICLE DYNAMICS MODIFIERS ---
+        let powerMult = 1.0;
+        let steerMult = 1.0;
+        let gripMult = 1.0;
+
+        if (state.currentCarType === 'sports') {
+            powerMult = 2.65; // Increased: Hits ~350 km/h (Highest top speed)
+            steerMult = 1.0;  // Standard nimble handling
+            gripMult = 1.0;   // Standard grip
+        } else if (state.currentCarType === 'muscle') {
+            powerMult = 1.90; // Decreased: Capped around ~250 km/h
+            steerMult = 0.70; // -30% Cornering turn speed (Sluggish/Heavy)
+            gripMult = 0.70;  // -30% Traction (Tail-happy, drifts easily)
+        } else if (state.currentCarType === 'sedan') {
+            powerMult = 1.50; // Standard: Capped around ~200 km/h
+            steerMult = 1.25; // +25% Cornering turn speed (Nimble handling)
+            gripMult = 1.40;  // +40% Traction (Sticks to the road)
+        }
+
         // Movement Vectors
         const fx = Math.cos(state.angle); // Forward X
         const fy = Math.sin(state.angle); // Forward Y
@@ -223,21 +242,18 @@ WH.initCanvas('viz', (ctx) => {
         const forwardSpeed = state.vx * fx + state.vy * fy;
         const sideSpeed = state.vx * rx + state.vy * ry;
 
-        // Acceleration
-        const accel = moveInput * state.power * dt;
+        // Acceleration (Modified by Car Type)
+        const accel = moveInput * (state.power * powerMult) * dt;
         state.vx += fx * accel;
         state.vy += fy * accel;
 
-        // Steering (Only steer if car has some momentum)
-        const steerSpeed = 4.5; // radians per second
-        // We steer based on forward speed to simulate turn radius
+        // Steering (Modified by Car Type)
+        const steerSpeed = 4.5 * steerMult; // radians per second
         const steerFactor = Math.min(Math.abs(forwardSpeed) / 100, 1.0) * (forwardSpeed < 0 ? -1 : 1);
         state.angle += steerInput * steerSpeed * steerFactor * dt;
 
-        // Grip / Friction Logic (Crucial for drifting)
-        // We cancel out sideways velocity based on the grip slider
-        // grip = 1.0 means sideways speed is killed almost instantly
-        const gripEffect = state.grip * 15.0; // multiplier to make slider feel right
+        // Grip / Friction Logic (Modified by Car Type)
+        const gripEffect = (state.grip * gripMult) * 15.0; 
         state.vx -= rx * sideSpeed * gripEffect * dt;
         state.vy -= ry * sideSpeed * gripEffect * dt;
 
@@ -394,7 +410,7 @@ WH.initCanvas('viz', (ctx) => {
             ctx.restore();
         }
 
-        // --- 4. DYNAMIC ENGINE AUDIO (VIRTUAL GEARBOX) ---
+        // --- 4. DYNAMIC ENGINE AUDIO (SMART GEARBOX) ---
         if (audioStarted) {
             let targetIdle = 0;
             let targetS1 = 0;
@@ -403,51 +419,53 @@ WH.initCanvas('viz', (ctx) => {
             let targetPitch = 0.5;
 
             const isSfxOn = state.sfx !== false;
-            const maxSpeed = 250; // NEW TOP SPEED FOR AUDIO MATH
-            const gasPedal = Math.abs(moveInput); // 1 if pressing W or S
+            
+            // 1. Determine the top speed of the CURRENT car
+            let maxSpeed = 350; // Default for Sports
+            if (state.currentCarType === 'muscle') maxSpeed = 250;
+            if (state.currentCarType === 'sedan') maxSpeed = 200;
+
+            const gasPedal = Math.abs(moveInput); 
 
             if (currentSpeedKmH === 0 && gasPedal === 0) {
-                targetIdle = 0.6; // Hear the idle clearly
+                targetIdle = 0.6; 
                 targetPitch = 0.5; 
             } else {
-                // Fade out idle smoothly
                 targetIdle = Math.max(0, 0.6 - (currentSpeedKmH * 0.05));
-
                 let baseVol = gasPedal > 0 ? 0.8 : 0.3;
 
-                // STRETCHED GEARBOX: Fits the new 250 km/h top speed
-                if (currentSpeedKmH <= 70) {
-                    targetS1 = baseVol;      // Low Gear (1s to 4s) stays until 70 km/h
-                } else if (currentSpeedKmH <= 160) {
-                    targetS2 = baseVol;      // Med Gear (4s to 10s) pulls from 70 to 160 km/h
+                // 2. DYNAMIC GEARBOX: Calculate shift points based on car's top speed
+                const shift1 = maxSpeed * 0.30; // Shifts to 2nd gear at 30% of max speed
+                const shift2 = maxSpeed * 0.65; // Shifts to 3rd gear at 65% of max speed
+
+                if (currentSpeedKmH <= shift1) {
+                    targetS1 = baseVol;      // Low Gear
+                } else if (currentSpeedKmH <= shift2) {
+                    targetS2 = baseVol;      // Med Gear
                 } else {
-                    targetS3 = baseVol;      // High Gear (10s to 22s) screams from 160 to 250+ km/h
+                    targetS3 = baseVol;      // High Gear
                 }
 
-                // Pitch: Scales all the way up to 250 km/h
+                // 3. Pitch: Scales perfectly to the car's specific top speed
                 let basePitch = gasPedal > 0 ? 0.9 : 0.6;
-                targetPitch = basePitch + (currentSpeedKmH / maxSpeed) * 1.2; 
+                targetPitch = basePitch + (currentSpeedKmH / maxSpeed) * 1.3; 
             }
 
-            // MUTE EVERYTHING if SFX toggle is turned off
             if (!isSfxOn) {
                 targetIdle = targetS1 = targetS2 = targetS3 = 0;
             }
 
-            // Smoothly interpolate to prevent popping on transitions
             audioState.idleVol += (targetIdle - audioState.idleVol) * 0.1;
             audioState.s1Vol += (targetS1 - audioState.s1Vol) * 0.1;
             audioState.s2Vol += (targetS2 - audioState.s2Vol) * 0.1;
             audioState.s3Vol += (targetS3 - audioState.s3Vol) * 0.1;
             audioState.speedPitch += (targetPitch - audioState.speedPitch) * 0.1;
 
-            // Apply the volumes to our 4 audio tracks
             if (idleGain) idleGain.gain.value = audioState.idleVol;
             if (speedGain1) speedGain1.gain.value = audioState.s1Vol;
             if (speedGain2) speedGain2.gain.value = audioState.s2Vol;
             if (speedGain3) speedGain3.gain.value = audioState.s3Vol;
 
-            // Apply pitch shift to all gears
             if (speedSource1) speedSource1.playbackRate.value = audioState.speedPitch;
             if (speedSource2) speedSource2.playbackRate.value = audioState.speedPitch;
             if (speedSource3) speedSource3.playbackRate.value = audioState.speedPitch;
