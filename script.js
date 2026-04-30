@@ -1,4 +1,3 @@
-
 // ==========================================
 // SHODAN GAMES - PORTFOLIO JAVASCRIPT
 // ==========================================
@@ -40,16 +39,10 @@ async function loadGames() {
 
         // Loop through JSON categories (html, unity)
         for (const [category, gameFolders] of Object.entries(categories)) {
-            
             // Loop through each game folder in that category
             gameFolders.forEach(folderName => {
-                // Construct path: games/html/snake/data.json
                 const jsonPath = `games/${category}/${folderName}/data.json`;
-                
-                // Add to fetch list
-                fetchPromises.push(
-                    fetchGameData(jsonPath, category, folderName)
-                );
+                fetchPromises.push(fetchGameData(jsonPath, category, folderName));
             });
         }
 
@@ -82,14 +75,12 @@ async function loadGames() {
 async function fetchGameData(path, category, folderName) {
     try {
         const res = await fetch(path);
-        if (!res.ok) return;
+        if (!res.ok) return; // If data.json is missing, skip it gracefully
 
         const game = await res.json();
 
-        // AUTO-FIX PATHS:
-        // This converts "thumb.png" -> "games/html/snake/thumb.png"
+        // AUTO-FIX PATHS: Converts "thumb.png" -> "games/html/snake/thumb.png"
         const rootPath = `games/${category}/${folderName}/`;
-        
         const fix = (p) => (p && !p.startsWith('http') && !p.startsWith('./')) ? rootPath + p : p;
 
         game.thumbnail = fix(game.thumbnail);
@@ -113,18 +104,9 @@ async function fetchGameData(path, category, folderName) {
 
 // 2. RENDERING SYSTEM
 function renderGames() {
-    // Render Featured
-    if (gamesData.featured.length > 0) {
-        renderGameSection('featured', gamesData.featured);
-    }
-    // Render Unity
-    if (gamesData.unity.length > 0) {
-        renderGameSection('unity', gamesData.unity);
-    }
-    // Render HTML
-    if (gamesData.html.length > 0) {
-        renderGameSection('html', gamesData.html);
-    }
+    if (gamesData.featured.length > 0) renderGameSection('featured', gamesData.featured);
+    if (gamesData.unity.length > 0) renderGameSection('unity', gamesData.unity);
+    if (gamesData.html.length > 0) renderGameSection('html', gamesData.html);
 }
 
 function renderGameSection(category, games) {
@@ -145,9 +127,14 @@ function createGameCard(game) {
     const thumbnail = game.thumbnail || '';
     const hasVideo = game.video && CONFIG.enableVideoPreview;
     
+    // Handle external links dynamically
+    const isExternal = game.isExternal || false;
+    const buttonText = isExternal ? (game.externalText || '🔗 Get Game') : '▶ Play Now';
+    const onClickAction = `playGame('${escapeHtml(game.playUrl)}', '${escapeHtml(game.title)}')`;
+    
     return `
         <div class="game-card" data-game-title="${escapeHtml(game.title)}">
-            <div class="game-thumbnail" onclick="playGame('${escapeHtml(game.playUrl)}', '${escapeHtml(game.title)}')" style="cursor: pointer;">
+            <div class="game-thumbnail" onclick="${onClickAction}" style="cursor: pointer;">
                 ${thumbnail ? 
                     `<img src="${escapeHtml(thumbnail)}" alt="${escapeHtml(game.title)}" loading="lazy">` : 
                     `<div class="no-thumbnail">🎮</div>`
@@ -161,13 +148,13 @@ function createGameCard(game) {
             </div>
             <div class="game-info">
                 <h3 class="game-title">${escapeHtml(game.title)}</h3>
-                <p class="game-description">${escapeHtml(game.description)}</p>
+                <p class="game-description">${escapeHtml(game.description || '')}</p>
                 <div class="game-tags">
                     ${(game.tags || []).map(tag => `<span class="tag">${escapeHtml(tag)}</span>`).join('')}
                 </div>
                 <div class="game-actions">
-                    <button class="btn btn-play" onclick="playGame('${escapeHtml(game.playUrl)}', '${escapeHtml(game.title)}')">
-                        ▶ Play Now
+                    <button class="btn btn-play" onclick="${onClickAction}">
+                        ${buttonText}
                     </button>
                     ${game.sourceUrl ? 
                         `<a href="${escapeHtml(game.sourceUrl)}" target="_blank" class="btn btn-source">📁 Source</a>` : ''
@@ -194,11 +181,8 @@ function setupVideoHandlers(containerEl) {
 }
 
 function playGame(url, title) {
-    // Option 1: Open in a NEW tab (Recommended)
-    // window.open(url, '_blank');
-
-    // Option 2: Open in the SAME tab (Delete the line above and uncomment this one if you prefer)
-    window.location.href = url;
+    // Opens in a NEW tab so your portfolio stays open
+    window.open(url, '_blank');
     
     if (CONFIG.enableAnalytics && typeof gtag !== 'undefined') {
         gtag('event', 'play_game', { 'game_title': title, 'game_url': url });
@@ -212,7 +196,6 @@ function escapeHtml(text) {
     })[m]);
 }
 
-// Keep modal code just in case needed later, though unused for new tab behavior
 function closeGame() {
     const modal = document.getElementById('game-modal');
     if(modal) modal.classList.remove('active');
