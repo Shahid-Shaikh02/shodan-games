@@ -1,0 +1,11 @@
+{
+  "category": "html",
+  "isFeatured": true,
+  "title": "Tapply Bird",
+  "description": "A simple yet challenging tapping game with a bird and objects.",
+  "thumbnail": "resources/thumb.jpg",
+  "video": "resources/preview.mp4",
+  "playUrl": "index.html",
+  "sourceUrl": "https://github. com/Shahid-Shaikh02/shodan-games/tree/main/games/Tapply-Bird",
+  "tags": ["Unity", "Canvas", "Casual"]
+}
