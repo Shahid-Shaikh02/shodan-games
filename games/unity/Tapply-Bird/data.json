@@ -2,7 +2,7 @@
   "category": "unity",
   "isFeatured": true,
   "title": "Tapply Bird",
-  "description": "A simple yet challenging tapping game with a bird and objects.",
+  "description": "A simple yet challenging tapping game featuring a bird and various objects.",
   "thumbnail": "resources/thumb.jpg",
   "video": "resources/preview.mp4",
   "playUrl": "index.html",
