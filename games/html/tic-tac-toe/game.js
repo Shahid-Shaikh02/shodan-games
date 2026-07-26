@@ -122,21 +122,34 @@ state.winner = null;
 state.winningLine = null;
 state.scoreX = 0;
 state.scoreO = 0;
+state.myScore = 0;
+state.opponentScore = 0;
 state.gameOverTriggered = false;
 state.animScale = {};          
 state.shakeOffset = { x: 0, y: 0 }; 
+state.myRestartVote = false;
+state.opponentRestartVote = false;
 
 function resetGame(s) {
     s.boardState = ['', '', '', '', '', '', '', '', ''];
     s.cols = 3;
     s.rows = 3;
-    s.isXTurn = s.startingPlayer === 'X';
+    
+    // X ALWAYS goes first. 
+    if (s.gameMode !== 'online') {
+        s.isXTurn = s.startingPlayer === 'X';
+    } else {
+        s.isXTurn = true; 
+    }
+    
     s.movesCount = 0;
     s.winner = null;
     s.winningLine = null;
     s.gameOverTriggered = false;
     s.animScale = {};          
     s.shakeOffset = { x: 0, y: 0 }; 
+    s.myRestartVote = false;
+    s.opponentRestartVote = false;
 }
 
 // Animation Helpers
@@ -150,6 +163,15 @@ function triggerShake() {
     anime({ targets: state.shakeOffset, x: [15, -15, 10, -10, 5, -5, 0], y: [5, -5, 5, -5, 2, -2, 0], duration: 500, easing: 'easeInOutQuad' });
 }
 
+function showTemporaryAlert(msg) {
+    const alertBox = document.getElementById('custom-alert-popup');
+    document.getElementById('custom-alert-title').textContent = "Match Starting";
+    document.getElementById('custom-alert-msg').textContent = msg;
+    document.getElementById('btn-custom-alert-ok').style.display = 'none';
+    alertBox.style.display = 'flex';
+    setTimeout(() => { alertBox.style.display = 'none'; }, 2500); 
+}
+
 function triggerGameOver(winner) {
     if (state.gameOverTriggered) return;
     state.gameOverTriggered = true;
@@ -158,22 +180,29 @@ function triggerGameOver(winner) {
         const title = document.getElementById('confirm-title');
         const msg = document.getElementById('confirm-msg');
         title.textContent = "Game Over!";
-        msg.textContent = winner === 'Draw' ? "It's a draw. Play again?" : `${winner} won! Play again?`;
+        msg.textContent = winner === 'Draw' ? "It's a draw. Play again?" : winner + " won! Play again?";
         
         document.getElementById('btn-confirm-yes').onclick = () => {
             document.getElementById('confirm-popup').style.display = 'none';
             if (state.gameMode === 'online' && peerConn) {
-                peerConn.send({ type: 'RESTART_REQUEST' });
-                document.getElementById('custom-alert-title').textContent = "Waiting";
-                document.getElementById('custom-alert-msg').textContent = "Waiting for opponent...";
-                document.getElementById('btn-custom-alert-ok').style.display = 'none';
-                document.getElementById('custom-alert-popup').style.display = 'flex';
+                state.myRestartVote = true;
+                peerConn.send({ type: 'RESTART_VOTE' });
+                
+                if (state.opponentRestartVote) {
+                    executeRematch();
+                } else {
+                    document.getElementById('custom-alert-title').textContent = "Waiting";
+                    document.getElementById('custom-alert-msg').textContent = "Waiting for opponent to accept...";
+                    document.getElementById('btn-custom-alert-ok').style.display = 'none';
+                    document.getElementById('custom-alert-popup').style.display = 'flex';
+                }
             } else {
                 resetGame(state);
             }
         };
         document.getElementById('btn-confirm-no').onclick = () => {
             document.getElementById('confirm-popup').style.display = 'none';
+            if (state.gameMode === 'online' && peerConn) peerConn.send({ type: 'RESTART_DECLINE' });
             document.getElementById('btn-home').click();
         };
         document.getElementById('confirm-popup').style.display = 'flex';
@@ -345,7 +374,10 @@ uiLayer.innerHTML = `
         </div>
 
         <div class="hud-element status-panel">
-            <div style="font-size: 16px; margin-bottom: 4px; border-bottom: 1px solid var(--outline); padding-bottom: 4px;">Score <span style="color: var(--chart-1)" id="stat-score-x">0</span> - <span style="color: var(--chart-4)" id="stat-score-o">0</span></div>
+            <div style="font-size: 16px; margin-bottom: 4px; border-bottom: 1px solid var(--outline); padding-bottom: 4px;">
+                <span id="score-label-1">Player X</span> <span style="color: var(--chart-1)" id="stat-score-x">0</span> - 
+                <span style="color: var(--chart-4)" id="stat-score-o">0</span> <span id="score-label-2">Player O</span>
+            </div>
             <div>Turn: <span id="stat-turn" style="color: var(--chart-1)">X</span></div>
             <div>Moves: <span id="stat-moves">0</span></div>
             <div id="stat-winner"></div>
@@ -428,7 +460,7 @@ const statMoves = document.getElementById('stat-moves');
 const statWinner = document.getElementById('stat-winner');
 
 // --- 4. UI EVENTS & FLOW ---
-let peer = null, peerConn = null, myMark = 'X', isLeaving = false;
+let peer = null, peerConn = null, myMark = 'X', isLeaving = false, isHost = false;
 const ROOM_PREFIX = 'shodan-game-';
 
 document.getElementById('btn-online-mode').onclick = () => {
@@ -444,18 +476,17 @@ document.getElementById('btn-online-close').onclick = () => {
 // Host: Create Room
 document.getElementById('btn-create-room').onclick = () => {
     const roomCode = Math.random().toString(36).substring(2, 7).toUpperCase();
-    myMark = 'X';
+    isHost = true;
     
-    document.getElementById('online-status-msg').innerHTML = `
-        <div style="display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 8px;">
-            <span style="font-size: 16px;">Room Code:</span>
-            <span style="font-size: 24px; color: var(--chart-1); letter-spacing: 2px;">${roomCode}</span>
-            <button id="btn-copy-link" style="background: transparent; border: 2px solid var(--outline); border-radius: 6px; padding: 4px; cursor: pointer; display: flex; transition: 0.2s;" title="Copy Invite Link">
-                <span class="google-symbols" style="font-size: 20px; color: var(--primary);">content_copy</span>
-            </button>
-        </div>
-        <span style="font-size: 14px; font-weight: normal;">Waiting for opponent...</span>
-    `;
+    document.getElementById('online-status-msg').innerHTML = 
+        '<div style="display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 8px;">' +
+            '<span style="font-size: 16px;">Room Code:</span>' +
+            '<span style="font-size: 24px; color: var(--chart-1); letter-spacing: 2px;">' + roomCode + '</span>' +
+            '<button id="btn-copy-link" style="background: transparent; border: 2px solid var(--outline); border-radius: 6px; padding: 4px; cursor: pointer; display: flex; transition: 0.2s;" title="Copy Invite Link">' +
+                '<span class="google-symbols" style="font-size: 20px; color: var(--primary);">content_copy</span>' +
+            '</button>' +
+        '</div>' +
+        '<span style="font-size: 14px; font-weight: normal;">Waiting for opponent...</span>';
 
     document.getElementById('btn-copy-link').onclick = () => {
         const inviteUrl = window.location.origin + window.location.pathname + '?room=' + roomCode;
@@ -467,14 +498,25 @@ document.getElementById('btn-create-room').onclick = () => {
     };
 
     if (peer) peer.destroy(); 
-    peer = new Peer(ROOM_PREFIX + roomCode);
+    peer = new Peer(ROOM_PREFIX + roomCode, {
+        config: { 'iceServers': [{ urls: 'stun:stun.l.google.com:19302' }, { urls: 'stun:stun1.l.google.com:19302' }] }
+    });
 
     peer.on('connection', (conn) => {
         peerConn = conn;
         peerConn.on('open', () => {
+            const cryptoArray = new Uint8Array(1);
+            window.crypto.getRandomValues(cryptoArray);
+            const amIX = cryptoArray[0] % 2 === 0;
+            
+            myMark = amIX ? 'X' : 'O';
+            
+            peerConn.send({ type: 'INIT', mark: amIX ? 'O' : 'X' });
+
             setupConnection();
             document.getElementById('online-popup').style.display = 'none';
             startGame('online', null);
+            showTemporaryAlert('Coin Toss: You are ' + myMark + ' (' + (myMark === 'X' ? 'Green' : 'Red') + '). X goes first!');
         });
     });
 };
@@ -482,17 +524,19 @@ document.getElementById('btn-create-room').onclick = () => {
 document.getElementById('btn-join-room').onclick = () => {
     const code = document.getElementById('room-code-input').value.trim().toUpperCase();
     if (!code) return;
-    myMark = 'O'; document.getElementById('online-status-msg').textContent = 'Connecting to room...';
+    isHost = false; 
+    document.getElementById('online-status-msg').textContent = 'Connecting to room...';
     
     if (peer) peer.destroy();
-    peer = new Peer(); 
+    peer = new Peer({
+        config: { 'iceServers': [{ urls: 'stun:stun.l.google.com:19302' }, { urls: 'stun:stun1.l.google.com:19302' }] }
+    }); 
     
     peer.on('open', () => {
         peerConn = peer.connect(ROOM_PREFIX + code);
         peerConn.on('open', () => {
             setupConnection();
-            document.getElementById('online-popup').style.display = 'none';
-            startGame('online', null);
+            document.getElementById('online-status-msg').textContent = 'Waiting for host to assign roles...';
         });
     });
     peer.on('error', (err) => {
@@ -501,9 +545,31 @@ document.getElementById('btn-join-room').onclick = () => {
     });
 };
 
+function executeRematch() {
+    document.getElementById('custom-alert-popup').style.display = 'none';
+    state.myRestartVote = false;
+    state.opponentRestartVote = false;
+    
+    if (isHost) {
+        const cryptoArray = new Uint8Array(1);
+        window.crypto.getRandomValues(cryptoArray);
+        const amIX = cryptoArray[0] % 2 === 0;
+        
+        myMark = amIX ? 'X' : 'O';
+        peerConn.send({ type: 'RESTART_SYNC', mark: amIX ? 'O' : 'X' });
+        resetGame(state);
+        showTemporaryAlert('Coin Toss: You are ' + myMark + ' (' + (myMark === 'X' ? 'Green' : 'Red') + '). X goes first!');
+    }
+}
+
 function setupConnection() {
     peerConn.on('data', (data) => {
-        if (data.type === 'MOVE') {
+        if (data.type === 'INIT') {
+            myMark = data.mark;
+            document.getElementById('online-popup').style.display = 'none';
+            startGame('online', null);
+            showTemporaryAlert('Coin Toss: You are ' + myMark + ' (' + (myMark === 'X' ? 'Green' : 'Red') + '). X goes first!');
+        } else if (data.type === 'MOVE') {
             const newBoard = [...state.boardState]; newBoard[data.index] = data.mark;
             state.boardState = newBoard; state.movesCount++;
             playSound(data.mark === 'X' ? 'x' : 'o');
@@ -512,26 +578,35 @@ function setupConnection() {
             const winCheck = checkWinner(newBoard, state.cols, state.rows);
             if (winCheck) {
                 state.winner = winCheck.winner; state.winningLine = winCheck.line;
-                if (state.winner === 'X') state.scoreX++; else if (state.winner === 'O') state.scoreO++;
+                if (state.winner === myMark) state.myScore++; else if (state.winner !== 'Draw') state.opponentScore++;
                 playSound(state.winner === state.startingPlayer ? 'win' : 'win-alt'); triggerGameOver(state.winner);
             } else if (state.movesCount >= state.boardState.length) {
                 state.winner = 'Draw'; playSound('draw'); triggerGameOver('Draw');
             } else { state.isXTurn = !state.isXTurn; }
-        } else if (data.type === 'RESTART_REQUEST') {
-            const title = document.getElementById('confirm-title'), msg = document.getElementById('confirm-msg');
-            title.textContent = "Restart?"; msg.textContent = "Opponent wants to restart. Accept?";
-            document.getElementById('btn-confirm-yes').onclick = () => {
-                document.getElementById('confirm-popup').style.display = 'none';
-                peerConn.send({ type: 'RESTART_ACCEPT' }); resetGame(state);
-            };
-            document.getElementById('btn-confirm-no').onclick = () => {
-                document.getElementById('confirm-popup').style.display = 'none';
-                peerConn.send({ type: 'RESTART_DECLINE' });
-            };
-            document.getElementById('confirm-popup').style.display = 'flex';
-        } else if (data.type === 'RESTART_ACCEPT') {
-            document.getElementById('custom-alert-popup').style.display = 'none';
-            playSound('click'); resetGame(state);
+        } else if (data.type === 'RESTART_VOTE') {
+            state.opponentRestartVote = true;
+            if (state.myRestartVote) {
+                executeRematch();
+            } else {
+                const title = document.getElementById('confirm-title'), msg = document.getElementById('confirm-msg');
+                title.textContent = "Restart?"; msg.textContent = "Opponent wants to restart. Accept?";
+                document.getElementById('btn-confirm-yes').onclick = () => {
+                    document.getElementById('confirm-popup').style.display = 'none';
+                    state.myRestartVote = true;
+                    peerConn.send({ type: 'RESTART_VOTE' });
+                    executeRematch();
+                };
+                document.getElementById('btn-confirm-no').onclick = () => {
+                    document.getElementById('confirm-popup').style.display = 'none';
+                    peerConn.send({ type: 'RESTART_DECLINE' });
+                };
+                document.getElementById('confirm-popup').style.display = 'flex';
+            }
+        } else if (data.type === 'RESTART_SYNC') {
+            playSound('click'); 
+            myMark = data.mark;
+            resetGame(state);
+            showTemporaryAlert('Coin Toss: You are ' + myMark + ' (' + (myMark === 'X' ? 'Green' : 'Red') + '). X goes first!');
         } else if (data.type === 'RESTART_DECLINE') {
             document.getElementById('btn-custom-alert-ok').style.display = 'flex';
             document.getElementById('custom-alert-title').textContent = "Declined";
@@ -547,7 +622,7 @@ function setupConnection() {
         document.getElementById('btn-custom-alert-ok').style.display = 'flex';
         document.getElementById('btn-custom-alert-ok').onclick = () => {
             document.getElementById('custom-alert-popup').style.display = 'none'; 
-            isLeaving = true; // Set flag so our own simulated home click doesn't show "You left"
+            isLeaving = true; 
             document.getElementById('btn-home').click(); 
         };
         document.getElementById('custom-alert-popup').style.display = 'flex';
@@ -566,7 +641,7 @@ document.getElementById('btn-play').onclick = () => {
 
 document.getElementById('btn-mode-back').onclick = () => {
     playSound('click'); elMenu.style.display = 'flex';
-    setTimeout(() => { elModeMenu.style.opacity = '0'; elMenu.style.opacity = '1'; }, 10);
+    setTimeout(() => { elModeMenu.style.opacity = '0'; elModeMenu.style.opacity = '1'; }, 10);
     setTimeout(() => { elModeMenu.style.display = 'none'; }, 300);
 };
 
@@ -597,11 +672,17 @@ document.getElementById('btn-restart').onclick = () => {
     playSound('click');
     
     if (state.gameMode === 'online') {
-        if (peerConn) peerConn.send({ type: 'RESTART_REQUEST' });
-        document.getElementById('custom-alert-title').textContent = "Waiting";
-        document.getElementById('custom-alert-msg').textContent = "Restart request sent to opponent...";
-        document.getElementById('btn-custom-alert-ok').style.display = 'none';
-        document.getElementById('custom-alert-popup').style.display = 'flex';
+        state.myRestartVote = true;
+        if (peerConn) peerConn.send({ type: 'RESTART_VOTE' });
+        
+        if (state.opponentRestartVote) {
+            executeRematch();
+        } else {
+            document.getElementById('custom-alert-title').textContent = "Waiting";
+            document.getElementById('custom-alert-msg').textContent = "Waiting for opponent to accept...";
+            document.getElementById('btn-custom-alert-ok').style.display = 'none';
+            document.getElementById('custom-alert-popup').style.display = 'flex';
+        }
     } else {
         const title = document.getElementById('confirm-title'), msg = document.getElementById('confirm-msg');
         title.textContent = "Restart?"; msg.textContent = "Are you sure you want to restart the match?";
@@ -628,7 +709,7 @@ document.getElementById('btn-home').onclick = () => {
     }
 
     if (peer) { peer.destroy(); peer = null; } peerConn = null;
-    state.scoreX = 0; state.scoreO = 0;
+    state.scoreX = 0; state.scoreO = 0; state.myScore = 0; state.opponentScore = 0;
     gameState = 'menu'; elHud.style.display = 'none'; elModeMenu.style.display = 'none';
     controlsGrid.style.setProperty('display', 'none', 'important'); settingsOpen = false;
     elMenu.style.display = 'flex'; setTimeout(() => { elMenu.style.opacity = '1'; }, 10);
@@ -668,9 +749,6 @@ WH.initCanvas('vizTop', (ctx) => {
         const safeMarginTop = window.innerWidth <= 600 ? 100 : 60, safeHeight = height - safeMarginTop;
         const cols = state.cols || 3, rows = state.rows || 3, minDim = Math.min(width * 0.9, safeHeight * 0.9);
         const cellSize = minDim / Math.max(cols, rows), gridX = (width / 2) - (cellSize * cols / 2), gridY = safeMarginTop + (safeHeight / 2) - (cellSize * rows / 2);
-
-        ctx.save();
-        ctx.translate(state.shakeOffset?.x || 0, state.shakeOffset?.y || 0);
 
         // Apply Global Board Shake
         ctx.save();
@@ -736,7 +814,11 @@ WH.initCanvas('vizTop', (ctx) => {
                         const winCheck = checkWinner(newBoard, cols, rows);
                         if (winCheck) {
                             state.winner = winCheck.winner; state.winningLine = winCheck.line;
-                            if (state.winner === 'X') state.scoreX++; else if (state.winner === 'O') state.scoreO++;
+                            if (state.gameMode === 'online') {
+                                if (state.winner === myMark) state.myScore++; else if (state.winner !== 'Draw') state.opponentScore++;
+                            } else {
+                                if (state.winner === 'X') state.scoreX++; else if (state.winner === 'O') state.scoreO++;
+                            }
                             playSound(state.winner === state.startingPlayer ? 'win' : 'win-alt'); triggerGameOver(state.winner);
                         } else if (state.movesCount >= state.boardState.length) {
                             state.winner = 'Draw'; playSound('draw'); triggerGameOver('Draw');
@@ -772,6 +854,18 @@ WH.initCanvas('vizTop', (ctx) => {
         ctx.restore();
 
         // Update HUD
+        if (state.gameMode === 'online') {
+            document.getElementById('score-label-1').innerHTML = 'You (<span style="color: ' + (myMark === 'X' ? 'var(--chart-1)' : 'var(--chart-4)') + '">' + myMark + '</span>)';
+            document.getElementById('stat-score-x').textContent = state.myScore || 0;
+            document.getElementById('score-label-2').innerHTML = 'Opponent (<span style="color: ' + (myMark === 'X' ? 'var(--chart-4)' : 'var(--chart-1)') + '">' + (myMark === 'X' ? 'O' : 'X') + '</span>)';
+            document.getElementById('stat-score-o').textContent = state.opponentScore || 0;
+        } else {
+            document.getElementById('score-label-1').innerHTML = 'Player X';
+            document.getElementById('stat-score-x').textContent = state.scoreX || 0;
+            document.getElementById('score-label-2').innerHTML = 'Player O';
+            document.getElementById('stat-score-o').textContent = state.scoreO || 0;
+        }
+
         if (state.winner) {
             statTurn.textContent = '-';
         } else {
@@ -784,11 +878,9 @@ WH.initCanvas('vizTop', (ctx) => {
         }
         statTurn.style.color = state.isXTurn ? WH.getColor('--chart-1') : WH.getColor('--chart-4');
         statMoves.textContent = state.movesCount;
-        document.getElementById('stat-score-x').textContent = state.scoreX;
-        document.getElementById('stat-score-o').textContent = state.scoreO;
 
         if (state.winner) {
-            statWinner.textContent = state.winner === 'Draw' ? "It's a Draw!" : `${state.winner} WINS!`;
+            statWinner.textContent = state.winner === 'Draw' ? "It's a Draw!" : state.winner + " WINS!";
             statWinner.style.color = state.winner === 'X' ? WH.getColor('--chart-1') : (state.winner === 'O' ? WH.getColor('--chart-4') : '#1B1C1D');
         } else { statWinner.textContent = ""; }
     };
