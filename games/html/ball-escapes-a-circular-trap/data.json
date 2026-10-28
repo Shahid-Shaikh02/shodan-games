@@ -1,11 +1,3 @@
-{
-  "category": "html", 
-  "isFeatured": true,
-  "title": "Ball Escape",
-  "description": "Escape the circular path in this pure HTML5 game.",
-  "thumbnail": "resources/thumb.jpg",
-  "video": "resources/preview.mp4",
-  "playUrl": "index.html",
-  "sourceUrl": "https://github.com/Shahid-Shaikh02/shodan-games/tree/main/games/html/ball-escapes-a-circular-trap",
-  "tags": ["HTML5", "Canvas", "Casual"]
-}
+version https://git-lfs.github.com/spec/v1
+oid sha256:a27a8bed92697a2ea5114c30a9d39883b3a53afc98d4cf9ea71d2181467daaa6
+size 413
