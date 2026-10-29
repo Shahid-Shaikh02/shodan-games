@@ -1,3 +1,69 @@
-version https://git-lfs.github.com/spec/v1
-oid sha256:eb5907230fb8de344ca61f3bd4c5ac5f273dbf44bdbba0e9b275a6aa6726231a
-size 1801
+html, body { height: 100%; margin: 0; background:#0b0d12; color:#e8eaed; font-family: system-ui, Arial; }
+
+    .header {
+  text-align: center;
+  padding: 20px;
+}
+
+.header-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;  /* Centers the logo + title horizontally */
+  margin-bottom: 10px;
+}
+
+.logo {
+  width: 50px;              /* Adjust size */
+  height: 50px;
+  margin-right: 15px;       /* Space between logo and text */
+}
+
+.header h1 {
+  margin: 0;
+  display: inline-block;
+  font-size: 2em;
+}
+
+.header-content h1 a {
+  margin: 0;
+  display: inline-block;
+  font-size: 2em;
+  color: #ffffff;
+  text-decoration: none;
+  transition: color 150ms ease;     
+}
+
+.header-content h1 a:hover {
+color: #2e7bff; /* blue on hover */
+}
+
+.header-content h1 a:active {
+color: #ff3b30; /* red on click */
+}
+.subtitle {
+  margin: 0;
+  font-size: 1.2em;
+}
+
+    /* header {
+      background-color: #004080;
+      color: white;
+      padding: 20px;
+      text-align: center;
+     }
+    img {
+      max-width: 10%;
+      height: auto;
+      display: inside;
+     } */
+
+    .wrap { display:grid; place-items:center; height:100%; gap:14px; }
+    canvas { background:#0f131a; border-radius:18px; box-shadow: 0 10px 30px rgba(0,0,0,.4); }
+    .ui { display:flex; gap:10px; align-items:center; flex-wrap:wrap; justify-content:center; }
+    button, input[type=range] {
+      background:#171c24; color:#e8eaed; border:1px solid #2a3342; border-radius:10px;
+      padding:8px 12px; cursor:pointer; outline:none;
+    }
+    button:hover { background:#1b222c; }
+    .flag { padding:4px 10px; border-radius: 999px; background:#132818; border:1px solid #1c3a24; color:#9bffb2; display:none; }
+    .flag.show { display:inline-block; }
